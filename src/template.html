@@ -1,0 +1,826 @@
+<title>Atlas Psy Barcelona</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="description" content="Cartographie des psychologues de Barcelone et analyse de positionnement de Nicolas Ruzette">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=Public+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: app shell — sticky header with tabs; Explorer = filters | map | list (stacks on phone, with Carte/Liste switch); analysis tabs = single reading column of panels */
+:root{
+  --bg:#f3f5f7; --surface:#ffffff; --surface-2:#e9edf1; --ink:#15202b; --ink-2:#465462; --muted:#6f7c89; --line:#d9dfe5;
+  --nico:#d4541f; --direct:#2a78d6; --other:#9aa6b2; --good:#1f8a4c; --warn:#b07400; --bad:#c43c3b;
+  --nico-soft:#fbe7dd; --direct-soft:#dde9f8; --chip:#eef1f4;
+  --land:#e4e9ee; --land-line:#ffffff; --district-line:#8c99a6; --sea:#dbe6ee;
+  --f-display:'Fraunces',Georgia,'Times New Roman',serif;
+  --f-body:'Public Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --f-mono:'IBM Plex Mono',ui-monospace,Consolas,monospace;
+  --r:10px; --shadow:0 1px 2px rgba(21,32,43,.06),0 4px 16px rgba(21,32,43,.06);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  color-scheme:dark;
+  --bg:#101418; --surface:#181d23; --surface-2:#222932; --ink:#eef2f5; --ink-2:#b8c2cc; --muted:#8693a0; --line:#2c343d;
+  --nico:#ef7a45; --direct:#4b93ea; --other:#5f6b78; --good:#46b97a; --warn:#d9a032; --bad:#e66767;
+  --nico-soft:#3a2418; --direct-soft:#1b2c42; --chip:#232a33;
+  --land:#1f262e; --land-line:#101418; --district-line:#56636f; --sea:#141a20;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 4px 16px rgba(0,0,0,.25);
+}}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#101418; --surface:#181d23; --surface-2:#222932; --ink:#eef2f5; --ink-2:#b8c2cc; --muted:#8693a0; --line:#2c343d;
+  --nico:#ef7a45; --direct:#4b93ea; --other:#5f6b78; --good:#46b97a; --warn:#d9a032; --bad:#e66767;
+  --nico-soft:#3a2418; --direct-soft:#1b2c42; --chip:#232a33;
+  --land:#1f262e; --land-line:#101418; --district-line:#56636f; --sea:#141a20;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 4px 16px rgba(0,0,0,.25);
+}
+*{box-sizing:border-box}
+html,body{background:var(--bg)}
+body{font-family:var(--f-body);color:var(--ink);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+h1,h2,h3{font-family:var(--f-display);font-weight:600;text-wrap:balance;margin:0;letter-spacing:-.01em}
+h2{font-size:1.55rem;line-height:1.2}
+h3{font-size:1.12rem;line-height:1.3}
+p{margin:0}
+a{color:var(--direct)}
+button{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--direct);outline-offset:2px;border-radius:4px}
+.num{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.eyebrow{font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+
+/* header */
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:800;background:var(--surface);border-bottom:1px solid var(--line)}
+.top-in{display:flex;align-items:center;gap:16px;padding:10px 16px;max-width:1500px;margin:0 auto;flex-wrap:wrap}
+.brand{display:flex;align-items:baseline;gap:10px;margin-right:auto;min-width:0}
+.brand h1{font-size:1.25rem}
+.brand span{color:var(--muted);font-size:.82rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tabs{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;max-width:100%}
+.tabs::-webkit-scrollbar{display:none}
+.tab{border:0;background:transparent;padding:8px 12px;border-radius:8px;cursor:pointer;color:var(--ink-2);font-weight:500;white-space:nowrap}
+.tab:hover{background:var(--chip)}
+.tab[aria-selected="true"]{background:var(--ink);color:var(--surface)}
+.tab .dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--nico);margin-right:6px;vertical-align:middle}
+@media (max-width:640px){.brand span{display:none}.top-in{padding:8px 16px;gap:8px}.tabs{width:100%}}
+
+main{max-width:1500px;margin:0 auto;padding:16px}
+section[hidden]{display:none}
+
+/* explorer */
+.explorer{display:grid;grid-template-columns:270px minmax(0,1fr) 370px;gap:14px;height:calc(100vh - 92px);min-height:560px}
+.pane{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);min-height:0;display:flex;flex-direction:column}
+.filters{overflow:auto;padding:14px;gap:16px}
+.fgroup{display:flex;flex-direction:column;gap:7px}
+.fgroup>label,.fgroup>.flabel{font-size:.74rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.search{width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);font:inherit}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:4px 10px;font-size:.82rem;cursor:pointer;color:var(--ink-2);line-height:1.35}
+.chip:hover{border-color:var(--ink-2)}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+.chip .c{color:var(--muted);font-family:var(--f-mono);font-size:.74rem;margin-left:3px}
+.chip[aria-pressed="true"] .c{color:inherit;opacity:.7}
+.range{display:flex;align-items:center;gap:10px}
+.range input{flex:1;accent-color:var(--ink)}
+.toggle{display:flex;align-items:center;gap:8px;font-size:.88rem;color:var(--ink-2);cursor:pointer}
+.toggle input{accent-color:var(--nico);width:16px;height:16px}
+.reset{border:1px solid var(--line);background:transparent;border-radius:8px;padding:7px 10px;cursor:pointer;color:var(--ink-2)}
+.mapwrap{position:relative;overflow:hidden;border-radius:var(--r)}
+#map{width:100%;height:100%;display:block;touch-action:none;background:var(--sea);cursor:grab}
+#map:active{cursor:grabbing}
+#lmap{position:absolute;inset:0;background:var(--sea);z-index:0}
+.mapwrap .count,.mapwrap .mapctl,.mapwrap .legend{z-index:500}
+.leaflet-container{font-family:var(--f-body)}
+#lmap.dark-tiles .leaflet-tile-pane{filter:invert(1) hue-rotate(180deg) brightness(.9) contrast(.9)}
+#lmap .leaflet-tile-pane{filter:saturate(.75)}
+.mapctl{position:absolute;right:10px;top:10px;display:flex;flex-direction:column;gap:6px}
+.mapctl button{width:36px;height:36px;border-radius:8px;border:1px solid var(--line);background:var(--surface);cursor:pointer;font-size:1.1rem;box-shadow:var(--shadow)}
+.legend{position:absolute;left:10px;bottom:10px;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:.78rem;display:flex;flex-direction:column;gap:4px;box-shadow:var(--shadow);max-width:calc(100% - 20px)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:-1px}
+.maptip{position:absolute;pointer-events:none;background:var(--ink);color:var(--surface);padding:6px 9px;border-radius:6px;font-size:.8rem;white-space:nowrap;transform:translate(-50%,-130%);display:none;max-width:260px;overflow:hidden;text-overflow:ellipsis}
+.count{position:absolute;left:10px;top:10px;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:6px 10px;font-size:.82rem;box-shadow:var(--shadow)}
+.list{overflow:auto}
+.listhead{display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--surface);z-index:1}
+.listhead select{margin-left:auto;font:inherit;font-size:.85rem;padding:5px 8px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink)}
+.row{display:grid;grid-template-columns:12px 1fr auto;gap:10px;padding:11px 12px;border-bottom:1px solid var(--line);cursor:pointer;align-items:start;background:none;border-left:0;border-right:0;border-top:0;text-align:left;width:100%}
+.row:hover,.row.hl{background:var(--chip)}
+.row .mk{width:10px;height:10px;border-radius:50%;margin-top:6px}
+.row .nm{font-weight:600;line-height:1.3}
+.row .sub{font-size:.8rem;color:var(--muted);margin-top:2px}
+.row .tg{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+.tag{font-size:.72rem;padding:2px 7px;border-radius:999px;background:var(--chip);color:var(--ink-2);white-space:nowrap}
+.tag.shared{background:var(--nico-soft);color:var(--ink)}
+.lang{font-family:var(--f-mono);font-size:.7rem;padding:1px 5px;border:1px solid var(--line);border-radius:4px;color:var(--ink-2)}
+.row .rt{text-align:right;font-size:.8rem;color:var(--ink-2);white-space:nowrap}
+.score{font-family:var(--f-mono);font-size:.78rem;font-weight:500}
+.mobswitch.seg,.toolbar .fbtn{display:none}
+
+@media (max-width:1180px){
+  .explorer{grid-template-columns:minmax(0,1fr) 340px}
+  .filters{position:fixed;inset:0 auto 0 0;width:min(340px,88vw);z-index:950;border-radius:0;transform:translateX(-105%);transition:transform .25s ease;padding-top:calc(14px + env(safe-area-inset-top,0px))}
+  .filters.open{transform:none;box-shadow:var(--shadow)}
+  .toolbar .fbtn{display:inline-flex}
+}
+@media (max-width:760px){
+  main{padding:12px 16px}
+  .explorer{display:flex;flex-direction:column;height:auto;min-height:0}
+  .mapwrap{height:62vh;min-height:360px}
+  .list{max-height:none}
+  .explorer[data-view="map"] .list{display:none}
+  .explorer[data-view="list"] .mapwrap{display:none}
+  .mobswitch.seg{display:flex}
+}
+.toolbar{display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap}
+@media (min-width:1181px){.toolbar{display:none}}
+.toolbar .fbtn,.seg button{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:8px 12px;cursor:pointer;font-weight:500;align-items:center;gap:6px}
+.seg{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;margin-left:auto}
+.seg button{border:0;border-radius:0}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--surface)}
+.badge{background:var(--nico);color:#fff;border-radius:999px;font-size:.72rem;padding:0 6px;font-family:var(--f-mono)}
+.scrim{position:fixed;inset:0;background:rgba(10,15,20,.35);z-index:900;display:none}
+.scrim.on{display:block}
+
+/* profile drawer */
+.drawer{position:fixed;z-index:1000;background:var(--surface);box-shadow:var(--shadow);overflow:auto;transition:transform .25s ease;
+  right:0;top:0;bottom:0;width:min(460px,100vw);transform:translateX(105%);border-left:1px solid var(--line);padding:18px 18px calc(24px + env(safe-area-inset-bottom,0px));padding-top:calc(18px + env(safe-area-inset-top,0px))}
+.drawer.open{transform:none}
+@media (max-width:760px){
+  .drawer{left:0;right:0;top:auto;bottom:0;width:auto;max-height:86vh;border-radius:16px 16px 0 0;transform:translateY(105%);border-left:0;border-top:1px solid var(--line);padding-top:10px}
+  .drawer::before{content:"";display:block;width:40px;height:4px;border-radius:2px;background:var(--line);margin:0 auto 10px}
+}
+.dclose{position:sticky;top:0;float:right;border:1px solid var(--line);background:var(--surface);border-radius:8px;width:34px;height:34px;cursor:pointer;font-size:1.1rem;z-index:2}
+.dhead{display:flex;flex-direction:column;gap:6px;margin-bottom:14px;padding-right:44px}
+.dhead h2{font-size:1.4rem}
+.kv{display:grid;grid-template-columns:110px 1fr;gap:8px 12px;font-size:.88rem;margin:12px 0}
+.kv dt{color:var(--muted)}
+.kv dd{margin:0;min-width:0;overflow-wrap:anywhere}
+.dsec{border-top:1px solid var(--line);padding-top:12px;margin-top:12px;display:flex;flex-direction:column;gap:8px}
+.dsec ul{margin:0;padding-left:18px;font-size:.88rem;display:flex;flex-direction:column;gap:3px}
+.pill{display:inline-flex;align-items:center;gap:6px;font-size:.78rem;font-weight:600;padding:3px 9px;border-radius:999px;border:1px solid currentColor;width:max-content}
+.pill.ok{color:var(--good)} .pill.mid{color:var(--warn)} .pill.no{color:var(--bad)}
+.simbar{height:8px;background:var(--chip);border-radius:4px;overflow:hidden}
+.simbar i{display:block;height:100%;background:var(--nico);border-radius:4px}
+
+/* reading sections */
+.read{max-width:1120px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:20px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.panel>.lead{color:var(--ink-2);max-width:72ch}
+.hero{display:grid;grid-template-columns:1.3fr 1fr;gap:24px;align-items:start}
+.hero h2{font-size:clamp(1.6rem,3.2vw,2.3rem)}
+.hero .verdict{font-size:1.02rem;color:var(--ink-2);max-width:62ch;display:flex;flex-direction:column;gap:10px}
+.idcard{border:1px solid var(--line);border-radius:var(--r);padding:14px;display:flex;flex-direction:column;gap:8px;font-size:.88rem;background:var(--bg)}
+.idcard .kv{grid-template-columns:96px 1fr;margin:0}
+@media (max-width:820px){.hero{grid-template-columns:1fr}}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px}
+.tile{border:1px solid var(--line);border-radius:var(--r);padding:14px;display:flex;flex-direction:column;gap:4px;background:var(--surface)}
+.tile .v{font-family:var(--f-display);font-size:2rem;line-height:1.05;font-weight:600}
+.tile .v small{font-size:.95rem;color:var(--muted);font-family:var(--f-body);font-weight:400}
+.tile .l{font-size:.85rem;color:var(--ink-2)}
+.tile .s{font-size:.75rem;color:var(--muted)}
+.tile.n{border-color:var(--nico)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+@media (max-width:820px){.grid2{grid-template-columns:1fr}}
+.bars{display:flex;flex-direction:column;gap:7px}
+.bar{display:grid;grid-template-columns:minmax(110px,190px) 1fr 52px;gap:10px;align-items:center;font-size:.85rem}
+.bar .lab{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink-2)}
+.bar .trk{height:14px;background:var(--chip);border-radius:0 4px 4px 0;position:relative}
+.bar .trk i{position:absolute;left:0;top:0;bottom:0;background:var(--other);border-radius:0 4px 4px 0;min-width:2px}
+.bar.mine .trk i{background:var(--nico)}
+.bar.mine .lab{color:var(--ink);font-weight:600}
+.bar .val{font-family:var(--f-mono);font-size:.78rem;text-align:right;color:var(--ink-2)}
+@media (max-width:480px){.bar{grid-template-columns:110px 1fr 44px;gap:8px}}
+.keyline{display:flex;flex-wrap:wrap;gap:14px;font-size:.8rem;color:var(--ink-2)}
+.keyline i{display:inline-block;width:12px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+.swot{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:820px){.swot{grid-template-columns:1fr}}
+.swot .box{border:1px solid var(--line);border-radius:var(--r);padding:16px;display:flex;flex-direction:column;gap:10px;border-top-width:3px}
+.swot .box.s{border-top-color:var(--good)} .swot .box.w{border-top-color:var(--bad)} .swot .box.o{border-top-color:var(--direct)} .swot .box.t{border-top-color:var(--warn)}
+.swot ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:10px}
+.swot li{font-size:.9rem;line-height:1.45}
+.swot li b{display:block;font-weight:600;color:var(--ink)}
+.swot li span{color:var(--ink-2)}
+.plan{display:flex;flex-direction:column;gap:0;counter-reset:step}
+.step{display:grid;grid-template-columns:34px 1fr;gap:14px;padding:14px 0;border-top:1px solid var(--line)}
+.step:first-child{border-top:0}
+.step::before{counter-increment:step;content:counter(step);font-family:var(--f-mono);font-weight:500;width:30px;height:30px;border-radius:50%;border:1.5px solid var(--ink);display:grid;place-items:center;font-size:.85rem}
+.step h3{font-size:1.02rem}
+.step p{color:var(--ink-2);font-size:.9rem;margin-top:4px;max-width:75ch}
+.step .meta{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r)}
+table{border-collapse:collapse;width:100%;font-size:.86rem}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600;background:var(--bg);white-space:nowrap}
+tr:last-child td{border-bottom:0}
+tbody tr.click{cursor:pointer}
+tbody tr.click:hover{background:var(--chip)}
+.strip{position:relative;height:120px;margin:8px 4px 26px}
+.strip .axis{position:absolute;left:0;right:0;bottom:0;border-top:1px solid var(--line)}
+.strip .tk{position:absolute;bottom:-20px;font-size:.72rem;color:var(--muted);transform:translateX(-50%);font-family:var(--f-mono)}
+.strip .d{position:absolute;width:9px;height:9px;border-radius:50%;background:var(--other);transform:translate(-50%,50%);border:1.5px solid var(--surface)}
+.strip .mark{position:absolute;top:0;bottom:0;border-left:2px solid var(--nico)}
+.strip .mark span{position:absolute;top:-2px;left:6px;font-size:.75rem;color:var(--ink);white-space:nowrap;background:var(--surface);padding:0 3px}
+.strip .mark.c{border-left-style:dashed}
+.strip .band{position:absolute;bottom:0;height:100%;background:var(--direct-soft);opacity:.7}
+.note{font-size:.8rem;color:var(--muted)}
+.callout{border-left:3px solid var(--nico);background:var(--nico-soft);padding:12px 14px;border-radius:0 8px 8px 0;font-size:.92rem}
+details.src summary{cursor:pointer;color:var(--ink-2);font-size:.88rem}
+details.src ul{font-size:.8rem;columns:2;column-gap:28px;padding-left:18px}
+@media (max-width:700px){details.src ul{columns:1}}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<header class="top">
+  <div class="top-in">
+    <div class="brand"><h1>Atlas Psy Barcelona</h1><span>__N__ profils · octobre 2026</span></div>
+    <nav class="tabs" role="tablist" aria-label="Sections">
+      <button class="tab" role="tab" id="t-explore" aria-selected="true" data-tab="explore">Explorer</button>
+      <button class="tab" role="tab" id="t-nico" aria-selected="false" data-tab="nico"><span class="dot"></span>Nicolas Ruzette</button>
+      <button class="tab" role="tab" id="t-market" aria-selected="false" data-tab="market">Marché</button>
+      <button class="tab" role="tab" id="t-method" aria-selected="false" data-tab="method">Méthode &amp; sources</button>
+    </nav>
+  </div>
+</header>
+
+<main>
+<!-- EXPLORER -->
+<section id="explore" role="tabpanel" aria-labelledby="t-explore">
+  <div class="toolbar">
+    <button class="fbtn" id="fbtn" aria-controls="filters">Filtres <span class="badge" id="fcount" hidden>0</span></button>
+    <div class="seg mobswitch" role="group" aria-label="Vue">
+      <button id="v-map" aria-pressed="true">Carte</button>
+      <button id="v-list" aria-pressed="false">Liste</button>
+    </div>
+  </div>
+  <div class="explorer" id="explorer" data-view="map">
+    <aside class="pane filters" id="filters" aria-label="Filtres">
+      <div class="fgroup"><label for="q">Recherche</label><input class="search" id="q" type="search" placeholder="Nom, centre, rue, mot-clé…" autocomplete="off"></div>
+      <label class="toggle"><input type="checkbox" id="onlyDirect"> Concurrents directs de Nicolas seulement</label>
+      <div class="fgroup"><span class="flabel">Langues</span><div class="chips" id="f-langs"></div></div>
+      <div class="fgroup"><span class="flabel">Spécialités</span><div class="chips" id="f-spec"></div></div>
+      <div class="fgroup"><span class="flabel">Approches</span><div class="chips" id="f-appr"></div></div>
+      <div class="fgroup"><span class="flabel">Segment de recherche</span><div class="chips" id="f-seg"></div></div>
+      <div class="fgroup"><span class="flabel">Type</span><div class="chips" id="f-type"></div></div>
+      <div class="fgroup"><span class="flabel">Inscription officielle</span><div class="chips" id="f-status"></div></div>
+      <div class="fgroup"><label for="pmax">Prix max. par séance</label><div class="range"><input type="range" id="pmax" min="40" max="170" step="5" value="170"><span class="num" id="pmaxv">tous</span></div><span class="note">Les profils sans prix publié restent visibles.</span></div>
+      <button class="reset" id="reset">Réinitialiser les filtres</button>
+    </aside>
+    <div class="pane mapwrap">
+      <svg id="map" role="img" aria-label="Carte de Barcelone avec les psychologues"></svg>
+      <div id="lmap" hidden></div>
+      <div class="count" id="mapcount"></div>
+      <div class="mapctl"><button id="zin" aria-label="Zoomer">+</button><button id="zout" aria-label="Dézoomer">−</button><button id="zreset" aria-label="Recentrer">⟲</button></div>
+      <div class="legend" aria-hidden="true">
+        <span><i style="background:var(--nico)"></i>Nicolas Ruzette</span>
+        <span><i style="background:var(--direct)"></i>Concurrent direct (proximité ≥ 60)</span>
+        <span><i style="background:var(--other)"></i>Autre psychologue ou centre</span>
+      </div>
+      <div class="maptip" id="maptip"></div>
+    </div>
+    <div class="pane list" id="list" aria-label="Liste des profils">
+      <div class="listhead"><span class="num" id="lcount"></span>
+        <label class="sr" for="sort">Trier</label>
+        <select id="sort"><option value="score">Proximité avec Nicolas</option><option value="reviews">Nombre d'avis</option><option value="price">Prix croissant</option><option value="name">Nom A→Z</option></select>
+      </div>
+      <div id="rows"></div>
+    </div>
+  </div>
+</section>
+
+<!-- NICOLAS -->
+<section id="nico" role="tabpanel" aria-labelledby="t-nico" hidden>
+  <div class="read" id="nico-body"></div>
+</section>
+
+<!-- MARKET -->
+<section id="market" role="tabpanel" aria-labelledby="t-market" hidden>
+  <div class="read" id="market-body"></div>
+</section>
+
+<!-- METHOD -->
+<section id="method" role="tabpanel" aria-labelledby="t-method" hidden>
+  <div class="read" id="method-body"></div>
+</section>
+</main>
+
+<div class="scrim" id="scrim"></div>
+<aside class="drawer" id="drawer" aria-label="Fiche détaillée" aria-hidden="true"></aside>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<script id="data" type="application/json">__DATA__</script>
+<script id="barris" type="application/json">__BARRIS__</script>
+<script id="districts" type="application/json">__DISTRICTS__</script>
+<script id="market-data" type="application/json">__MARKET__</script>
+<script>
+const DATA = JSON.parse(document.getElementById('data').textContent);
+const BARRIS = JSON.parse(document.getElementById('barris').textContent);
+const DISTRICTS = JSON.parse(document.getElementById('districts').textContent);
+const MARKET = JSON.parse(document.getElementById('market-data').textContent);
+const DNAME = {'01':'Ciutat Vella','02':'Eixample','03':'Sants-Montjuïc','04':'Les Corts','05':'Sarrià-Sant Gervasi','06':'Gràcia','07':'Horta-Guinardó','08':'Nou Barris','09':'Sant Andreu','10':'Sant Martí'};
+const LANGN = {FR:'Français',EN:'Anglais',ES:'Espagnol',CA:'Catalan',IT:'Italien',DE:'Allemand',PL:'Polonais',RU:'Russe',PT:'Portugais',TR:'Turc',NL:'Néerlandais',RO:'Roumain'};
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pct = (a,b) => b ? Math.round(100*a/b) : 0;
+
+/* ---------- Nicolas ---------- */
+const NICO = {
+  id:0, name:'Nicolas Ruzette', type:'individual', isNico:true,
+  address:"Plaça d'Urquinaona 10, 2-1, 08010 Barcelona", district:'Eixample', lat:41.38878, lng:2.17322, geo:'address',
+  langs:['EN','ES','FR'],
+  spec:['Couple','LGBTQ+','Non-monogamie','TDAH','Autisme','Haut potentiel','Hypersensibilité','Addictions','Dépendance affective','Expatriation & interculturel','Groupes','Corps & régulation','Anxiété & stress','Deuil & transitions'],
+  appr:['Émotions (EFT)','CNV','Systémique','Corps / somatique','Créatif (art, drame, voix)','Intégrative','3e vague (ACT, DBT, pleine conscience)'],
+  specialties:['Neurodiversité adulte (TDAH, autisme, HPI, hypersensibilité, masking)','Thérapie de couple (toutes configurations : LGBTQ+, polyamoureux, binationaux)','Corps & voix, régulation du système nerveux','Addictions & gestion émotionnelle','Groupes de parole et de voix','Expatriation, interculturalité, questions existentielles'],
+  approaches:['Thérapie centrée sur les émotions (EFT)','Neurobiologie interpersonnelle (Porges)','CNV','Approche systémique (Elkaïm, Seikkula)','Thérapie dramatique / théâtre','Éléments crânio-sacrés','AEDP, ACT (site anglais)'],
+  education:['Master en psychologie clinique, UCLouvain (spécialisation neuropsychologie clinique)','Erasmus, Université de Genève','Psychothérapie cognitive sociale, Universitat de Barcelona','Thérapie brève stratégique + théâtre thérapeutique, Universitat de Girona','Thérapie familiale, Tarragone'],
+  credentials:['Commission des Psychologues (Belgique), logo affiché sans numéro','COPC, logo affiché sans numéro (n° 20135 vu sur un annuaire, attribution incertaine)','« Psicólogo Sanitario » (Generalitat), déclaré sur LinkedIn, non vérifiable en ligne'],
+  status:'Non affichée', years:13, formats:['in-person','online'], price:70,
+  rating:null, reviews:0, website:'https://www.psychologue-bcn.com',
+  platforms:['Site FR','Site EN (figé 2020)','Site Bruxelles','Vivre à Barcelone','Yelp','psico.org (obsolète)','MundoPsicologos (obsolète)','Expat.com (obsolète)'],
+  media:['Article Biological Psychology 2011 (ocytocine & alexithymie), co-auteur','Série YouTube « Hablamos Barcelona » 2014 (4 épisodes)','Livres : « Kang : El parto neurodivergente », « Guide pratique pour souffrir » (introuvables en ligne)'],
+  notable:"Psychologue clinicien belge à Barcelone depuis 2009, en libéral depuis 2013, ex-Centre Hestia (2014-2018). Trilingue, intégratif, axé couple et neurodiversité.",
+  segments:['Nicolas'], sources:['https://www.psychologue-bcn.com/','https://expatpsychotherapy.com/','https://www.youtube.com/@hablamosbarcelona3186','https://doi.org/10.1016/j.biopsycho.2011.05.005']
+};
+
+/* similarity score 0-100 to Nicolas: specialties (40), approaches (25), languages (35) */
+const NS = new Set(NICO.spec), NA = new Set(NICO.appr);
+function simScore(o){
+  const s = new Set(o.spec), a = new Set(o.appr), l = new Set(o.langs);
+  const inter = (A,B) => [...A].filter(x => B.has(x));
+  const uni = (A,B) => new Set([...A,...B]).size;
+  const sj = s.size ? inter(s,NS).length/uni(s,NS) : 0;
+  const aj = a.size ? inter(a,NA).length/uni(a,NA) : 0;
+  const lang = (l.has('FR')?.5:0)+(l.has('EN')?.3:0)+(l.has('ES')?.2:0);
+  return Math.round(100*(.4*Math.min(1,sj/.3)+.25*Math.min(1,aj/.3)+.35*lang));
+}
+DATA.forEach(o => { o.score = simScore(o); o.direct = o.score >= 60; o.sharedSpec = o.spec.filter(x=>NS.has(x)); o.sharedAppr = o.appr.filter(x=>NA.has(x)); });
+NICO.score = 100;
+const ALL = [NICO, ...DATA];
+const N = DATA.length;
+
+/* ---------- filters ---------- */
+const F = {q:'', langs:new Set(), spec:new Set(), appr:new Set(), seg:new Set(), type:new Set(), status:new Set(), pmax:170, onlyDirect:false};
+const TYPEN = {individual:'Individuel', centre:'Centre', 'online platform':'Plateforme en ligne'};
+function counts(key){ const m = new Map(); DATA.forEach(o => (Array.isArray(o[key])?o[key]:[o[key]]).forEach(v => v && m.set(v,(m.get(v)||0)+1))); return [...m].sort((a,b)=>b[1]-a[1]); }
+function buildChips(el, key, set, labelFn=(v)=>v, limit=99){
+  const box = document.getElementById(el);
+  counts(key).slice(0,limit).forEach(([v,c]) => {
+    const b = document.createElement('button'); b.className='chip'; b.type='button'; b.setAttribute('aria-pressed','false');
+    b.innerHTML = `${esc(labelFn(v))}<span class="c">${c}</span>`;
+    b.onclick = () => { set.has(v)?set.delete(v):set.add(v); b.setAttribute('aria-pressed', set.has(v)); apply(); };
+    box.appendChild(b);
+  });
+}
+buildChips('f-langs','langs',F.langs,v=>LANGN[v]||v,10);
+buildChips('f-spec','spec',F.spec);
+buildChips('f-appr','appr',F.appr);
+buildChips('f-seg','segments',F.seg);
+buildChips('f-type','type',F.type,v=>TYPEN[v]||v);
+buildChips('f-status','status',F.status);
+const norm = s => String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();
+DATA.forEach(o => o._txt = norm([o.name,o.centre,o.address,o.district,o.notable,...o.specialties,...o.approaches,...o.education].join(' ')));
+function pass(o){
+  if (F.onlyDirect && !o.direct) return false;
+  if (F.q && !o._txt.includes(norm(F.q))) return false;
+  for (const v of F.langs) if (!o.langs.includes(v)) return false;
+  for (const v of F.spec) if (!o.spec.includes(v)) return false;
+  for (const v of F.appr) if (!o.appr.includes(v)) return false;
+  if (F.seg.size && !o.segments.some(s => F.seg.has(s))) return false;
+  if (F.type.size && !F.type.has(o.type)) return false;
+  if (F.status.size && !F.status.has(o.status)) return false;
+  if (F.pmax < 170 && o.price && o.price > F.pmax) return false;
+  return true;
+}
+let VIS = DATA;
+function activeCount(){ return F.langs.size+F.spec.size+F.appr.size+F.seg.size+F.type.size+F.status.size+(F.q?1:0)+(F.onlyDirect?1:0)+(F.pmax<170?1:0); }
+function apply(){
+  VIS = DATA.filter(pass);
+  const ac = activeCount(); const fc = document.getElementById('fcount'); fc.hidden = !ac; fc.textContent = ac;
+  renderList(); updateMap();
+}
+document.getElementById('q').addEventListener('input', e => { F.q = e.target.value.trim(); apply(); });
+document.getElementById('onlyDirect').addEventListener('change', e => { F.onlyDirect = e.target.checked; apply(); });
+document.getElementById('pmax').addEventListener('input', e => { F.pmax = +e.target.value; document.getElementById('pmaxv').textContent = F.pmax>=170?'tous':F.pmax+' €'; apply(); });
+document.getElementById('sort').addEventListener('change', renderList);
+document.getElementById('reset').onclick = () => {
+  ['langs','spec','appr','seg','type','status'].forEach(k => F[k].clear()); F.q=''; F.pmax=170; F.onlyDirect=false;
+  document.getElementById('q').value=''; document.getElementById('pmax').value=170; document.getElementById('pmaxv').textContent='tous'; document.getElementById('onlyDirect').checked=false;
+  document.querySelectorAll('.filters .chip').forEach(c => c.setAttribute('aria-pressed','false')); apply();
+};
+
+/* ---------- list ---------- */
+const color = o => o.isNico ? 'var(--nico)' : o.direct ? 'var(--direct)' : 'var(--other)';
+function renderList(){
+  const by = document.getElementById('sort').value;
+  const arr = [...VIS].sort((a,b) => by==='score' ? b.score-a.score : by==='reviews' ? (b.reviews||0)-(a.reviews||0) : by==='price' ? (a.price||999)-(b.price||999) : a.name.localeCompare(b.name));
+  const showNico = activeCount()===0 || pass(NICO);
+  document.getElementById('lcount').textContent = `${VIS.length} / ${N} profils`;
+  const row = o => `<button class="row" data-id="${o.id}">
+      <span class="mk" style="background:${color(o)}"></span>
+      <span><span class="nm">${esc(o.name)}</span>
+        <span class="sub">${esc(o.isNico?'Psychologue clinicien · Urquinaona':[TYPEN[o.type]||'', o.district||(o.geo==='none'?'adresse non trouvée':'')].filter(Boolean).join(' · '))}</span>
+        <span class="tg">${o.langs.map(l=>`<span class="lang">${l}</span>`).join('')} ${(o.isNico?o.spec:o.spec).slice(0,4).map(t=>`<span class="tag${!o.isNico&&NS.has(t)?' shared':''}">${esc(t)}</span>`).join('')}</span></span>
+      <span class="rt">${o.isNico?'<span class="score" style="color:var(--nico)">réf.</span>':`<span class="score">${o.score}</span>`}<br>${o.price?o.price+' €':'—'}<br>${o.reviews?o.reviews+' avis':''}</span>
+    </button>`;
+  document.getElementById('rows').innerHTML = (showNico?row(NICO):'') + arr.map(row).join('') || '<p class="note" style="padding:14px">Aucun profil ne correspond. Retirez un filtre.</p>';
+}
+document.getElementById('rows').addEventListener('click', e => { const r = e.target.closest('.row'); if (r) openProfile(+r.dataset.id); });
+document.getElementById('rows').addEventListener('mouseover', e => { const r = e.target.closest('.row'); highlight(r ? +r.dataset.id : null); });
+document.getElementById('rows').addEventListener('mouseleave', () => highlight(null));
+
+/* ---------- map ---------- */
+const svg = d3.select('#map');
+const gRoot = svg.append('g');
+const gLand = gRoot.append('g'), gDist = gRoot.append('g'), gLab = gRoot.append('g'), gPts = gRoot.append('g');
+let proj, path, curK = 1, W = 0, H = 0;
+const zoom = d3.zoom().scaleExtent([1, 14]).on('zoom', ev => { gRoot.attr('transform', ev.transform); curK = ev.transform.k; resizeMarks(); });
+svg.call(zoom).on('dblclick.zoom', null);
+function drawMap(){
+  const el = document.getElementById('map'); const r = el.getBoundingClientRect();
+  if (!r.width || !r.height) return;
+  W = r.width; H = r.height; svg.attr('viewBox', `0 0 ${W} ${H}`);
+  proj = d3.geoMercator().fitExtent([[14,14],[W-14,H-14]], DISTRICTS);
+  path = d3.geoPath(proj);
+  gLand.selectAll('path').data(BARRIS.features).join('path').attr('d', path).attr('fill','var(--land)').attr('stroke','var(--land-line)').attr('stroke-width',.8).attr('vector-effect','non-scaling-stroke');
+  gDist.selectAll('path').data(DISTRICTS.features).join('path').attr('d', path).attr('fill','none').attr('stroke','var(--district-line)').attr('stroke-width',1.1).attr('vector-effect','non-scaling-stroke');
+  gLab.selectAll('text').data(DISTRICTS.features).join('text')
+    .attr('transform', d => `translate(${path.centroid(d)})`).attr('text-anchor','middle')
+    .attr('fill','var(--muted)').style('font-family','var(--f-body)').style('font-size','11px').style('letter-spacing','.04em').style('pointer-events','none')
+    .text(d => DNAME[d.properties.d] || '');
+  updateMap();
+}
+function pts(){ const showN = activeCount()===0 || pass(NICO); return [...VIS.filter(o => o.lat), ...(showN?[NICO]:[])]; }
+function updateMap(){
+  if (!proj) return;
+  const data = pts().sort((a,b) => (a.isNico?2:a.direct?1:0) - (b.isNico?2:b.direct?1:0));
+  gPts.selectAll('g.p').data(data, d => d.id).join(
+    enter => { const g = enter.append('g').attr('class','p').style('cursor','pointer');
+      g.append('circle').attr('class','hit').attr('fill','transparent');
+      g.append('circle').attr('class','dot');
+      return g; })
+    .attr('transform', d => `translate(${proj([d.lng,d.lat])})`)
+    .each(function(d){ d3.select(this).select('.dot').attr('fill', color(d)).attr('stroke','var(--surface)').attr('stroke-width', d.isNico?2.5:1.5).attr('vector-effect','non-scaling-stroke').attr('opacity', d.geo==='address'||d.isNico?1:.75); })
+    .on('click', (ev,d) => openProfile(d.id))
+    .on('mouseenter', (ev,d) => showTip(ev,d)).on('mousemove', (ev,d) => showTip(ev,d)).on('mouseleave', hideTip);
+  gPts.selectAll('g.p').filter(d => d.isNico).raise();
+  resizeMarks();
+  const off = VIS.filter(o => !o.lat).length;
+  document.getElementById('mapcount').innerHTML = `<b class="num">${VIS.filter(o=>o.lat).length}</b> sur la carte${off?` · <span class="note">${off} sans adresse (dans la liste)</span>`:''}`;
+}
+function resizeMarks(){
+  const k = curK;
+  gPts.selectAll('.dot').attr('r', d => (d.isNico?8:d.direct?5.5:4.5)/Math.sqrt(k));
+  gPts.selectAll('.hit').attr('r', 12/Math.sqrt(k));
+  gLab.selectAll('text').style('font-size', (11/k)+'px');
+}
+const tip = document.getElementById('maptip');
+function showTip(ev,d){ const r = document.querySelector('.mapwrap').getBoundingClientRect(); tip.style.display='block'; tip.style.left=(ev.clientX-r.left)+'px'; tip.style.top=(ev.clientY-r.top)+'px'; tip.textContent = d.isNico ? 'Nicolas Ruzette' : `${d.name} · proximité ${d.score}`; }
+function hideTip(){ tip.style.display='none'; }
+function highlight(id){ gPts.selectAll('g.p').select('.dot').attr('stroke', d => d.id===id ? 'var(--ink)' : 'var(--surface)').attr('stroke-width', d => d.id===id ? 3 : d.isNico?2.5:1.5); if (id!=null) gPts.selectAll('g.p').filter(d=>d.id===id).raise(); }
+document.getElementById('zin').onclick = () => svg.transition().duration(250).call(zoom.scaleBy, 1.6);
+document.getElementById('zout').onclick = () => svg.transition().duration(250).call(zoom.scaleBy, 1/1.6);
+document.getElementById('zreset').onclick = () => svg.transition().duration(300).call(zoom.transform, d3.zoomIdentity);
+new ResizeObserver(() => drawMap()).observe(document.getElementById('map'));
+
+/* mobile switches */
+const exp = document.getElementById('explorer');
+const setView = v => { exp.dataset.view = v; document.getElementById('v-map').setAttribute('aria-pressed', v==='map'); document.getElementById('v-list').setAttribute('aria-pressed', v==='list'); if (v==='map') requestAnimationFrame(drawMap); };
+document.getElementById('v-map').onclick = () => setView('map');
+document.getElementById('v-list').onclick = () => setView('list');
+const fpanel = document.getElementById('filters'), scrim = document.getElementById('scrim');
+document.getElementById('fbtn').onclick = () => { fpanel.classList.add('open'); scrim.classList.add('on'); };
+scrim.onclick = () => { fpanel.classList.remove('open'); closeProfile(); scrim.classList.remove('on'); };
+
+/* ---------- profile drawer ---------- */
+const drawer = document.getElementById('drawer');
+const STATUS_PILL = {'Inscription visible':['ok','Inscription COPC / PGS affichée'],'Non affichée':['mid','Inscription non affichée'],'Non psychologue':['no','Pas psychologue diplômé·e (coach, conseiller…)']};
+function list(arr){ return arr && arr.length ? `<ul>${arr.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>` : '<span class="note">Non trouvé</span>'; }
+function openProfile(id){
+  const o = ALL.find(x => x.id===id); if (!o) return;
+  const [cls, lab] = o.isNico ? ['mid','Numéros COPC / PGS non affichés'] : STATUS_PILL[o.status];
+  const fmt = (o.formats||[]).map(f => f==='online'?'en ligne':f==='in-person'?'en cabinet':f).join(' · ');
+  drawer.innerHTML = `<button class="dclose" aria-label="Fermer">×</button>
+    <div class="dhead"><span class="eyebrow">${o.isNico?'Profil de référence':esc(TYPEN[o.type]||'')}${o.centre&&o.centre!==o.name?' · '+esc(o.centre):''}</span>
+      <h2>${esc(o.name)}</h2><span class="pill ${cls}">${lab}</span></div>
+    ${o.isNico?'':`<div class="dsec" style="border:0;margin:0;padding:0"><div style="display:flex;justify-content:space-between;font-size:.85rem"><span>Proximité avec Nicolas</span><b class="num">${o.score}/100</b></div><div class="simbar"><i style="width:${o.score}%"></i></div>
+      ${o.sharedSpec.length||o.sharedAppr.length?`<div class="tg" style="display:flex;flex-wrap:wrap;gap:4px">${[...o.sharedSpec,...o.sharedAppr].map(t=>`<span class="tag shared">${esc(t)}</span>`).join('')}</div>`:''}</div>`}
+    <dl class="kv">
+      <dt>Adresse</dt><dd>${esc(o.address||'Non trouvée')}${o.geo==='postcode'?' <span class="note">(placé au code postal)</span>':o.geo==='district'?' <span class="note">(position approximative)</span>':''}</dd>
+      <dt>Quartier</dt><dd>${esc(o.district||'—')}</dd>
+      <dt>Langues</dt><dd>${o.langs.map(l=>esc(LANGN[l]||l)).join(', ')||'—'}</dd>
+      <dt>Prix</dt><dd>${o.price?`<span class="num">${o.price} €</span> / séance`:'Non publié'}${o.isNico?' · couple 80 € (60 min), 120 € (90 min)':''}</dd>
+      <dt>Avis</dt><dd>${o.reviews?`<span class="num">${o.reviews}</span> avis${o.rating?` · note ${o.rating}`:''}${o.review_platform?` (${esc(o.review_platform)})`:''}`:o.isNico?'0 avis public (4 témoignages sur son site)':'Aucun trouvé'}</dd>
+      <dt>Expérience</dt><dd>${o.years?o.years+' ans':'—'}</dd>
+      <dt>Format</dt><dd>${esc(fmt||'—')}</dd>
+      ${o.website?`<dt>Site</dt><dd><a href="${esc(o.website)}" target="_blank" rel="noopener">${esc(o.website.replace(/^https?:\/\/(www\.)?/,'').replace(/\/$/,''))}</a></dd>`:''}
+    </dl>
+    ${o.notable?`<p class="callout" style="border-left-color:${o.isNico?'var(--nico)':'var(--direct)'};background:${o.isNico?'var(--nico-soft)':'var(--direct-soft)'}">${esc(o.notable)}</p>`:''}
+    <div class="dsec"><h3>Spécialités</h3>${list(o.specialties)}</div>
+    <div class="dsec"><h3>Approches</h3>${list(o.approaches)}</div>
+    <div class="dsec"><h3>Formation</h3>${list(o.education)}</div>
+    <div class="dsec"><h3>Titres &amp; inscriptions</h3>${list(o.credentials)}</div>
+    ${o.platforms&&o.platforms.length?`<div class="dsec"><h3>Présence en ligne</h3>${list(o.platforms)}</div>`:''}
+    ${o.media&&o.media.length?`<div class="dsec"><h3>Publications &amp; médias</h3>${list(o.media)}</div>`:''}
+    <div class="dsec"><h3>Sources</h3><ul>${(o.sources||[]).map(s=>`<li><a href="${esc(s)}" target="_blank" rel="noopener">${esc(s.replace(/^https?:\/\/(www\.)?/,'').slice(0,70))}</a></li>`).join('')}</ul>
+      <span class="note">Segment(s) : ${esc((o.segments||[]).join(', '))}. Données collectées en octobre 2026, à vérifier avant tout usage public.</span></div>`;
+  drawer.classList.add('open'); drawer.setAttribute('aria-hidden','false'); scrim.classList.add('on');
+  drawer.scrollTop = 0; drawer.querySelector('.dclose').onclick = closeProfile; drawer.querySelector('.dclose').focus();
+  highlight(id);
+}
+function closeProfile(){ drawer.classList.remove('open'); drawer.setAttribute('aria-hidden','true'); if (!fpanel.classList.contains('open')) scrim.classList.remove('on'); highlight(null); }
+document.addEventListener('keydown', e => { if (e.key==='Escape'){ closeProfile(); fpanel.classList.remove('open'); scrim.classList.remove('on'); } });
+
+/* ---------- tabs ---------- */
+document.querySelectorAll('.tab').forEach(t => t.onclick = () => {
+  document.querySelectorAll('.tab').forEach(x => x.setAttribute('aria-selected', x===t));
+  document.querySelectorAll('main>section').forEach(s => s.hidden = s.id !== t.dataset.tab);
+  if (t.dataset.tab==='explore') requestAnimationFrame(drawMap);
+  window.scrollTo({top:0});
+});
+
+/* ---------- stats ---------- */
+const S = {};
+S.n = N;
+S.fr = DATA.filter(o=>o.langs.includes('FR')).length;
+S.tri = DATA.filter(o=>['FR','EN','ES'].every(l=>o.langs.includes(l))).length;
+const NEURO = ['TDAH','Autisme','Haut potentiel','Hypersensibilité'];
+S.frCoupleNeuro = DATA.filter(o=>o.langs.includes('FR') && o.spec.includes('Couple') && o.spec.some(t=>NEURO.includes(t))).length;
+S.coupleNeuro = DATA.filter(o=>o.spec.includes('Couple') && o.spec.some(t=>NEURO.includes(t))).length;
+S.coupleNeuroBody = DATA.filter(o=>o.spec.includes('Couple') && o.spec.some(t=>NEURO.includes(t)) && o.appr.includes('Corps / somatique')).length;
+S.withRev = DATA.filter(o=>o.reviews).map(o=>o.reviews).sort((a,b)=>a-b);
+S.medRev = S.withRev[Math.floor(S.withRev.length/2)];
+S.indivRev = DATA.filter(o=>o.reviews && o.type==='individual').map(o=>o.reviews).sort((a,b)=>a-b);
+S.medIndivRev = S.indivRev[Math.floor(S.indivRev.length/2)];
+S.prices = DATA.filter(o=>o.price).map(o=>o.price).sort((a,b)=>a-b);
+S.medPrice = S.prices[Math.floor(S.prices.length/2)];
+S.cheaperOrEq = S.prices.filter(p=>p<=70).length;
+S.visible = DATA.filter(o=>o.status==='Inscription visible').length;
+S.direct = DATA.filter(o=>o.direct).length;
+S.groups = DATA.filter(o=>o.spec.includes('Groupes')).length;
+const freq = key => { const m = new Map(); DATA.forEach(o => o[key].forEach(t => m.set(t,(m.get(t)||0)+1))); return m; };
+S.specF = freq('spec'); S.apprF = freq('appr'); S.langF = freq('langs');
+
+function bars(entries, mineSet, total, opts={}){
+  const max = opts.max || Math.max(...entries.map(e=>e[1]));
+  return `<div class="bars">${entries.map(([k,v]) => `<div class="bar${mineSet&&mineSet.has(k)?' mine':''}" title="${esc(k)} : ${v} profils sur ${total} (${pct(v,total)} %)">
+     <span class="lab">${esc(opts.label?opts.label(k):k)}</span><span class="trk"><i style="width:${(100*v/max).toFixed(1)}%"></i></span><span class="val">${opts.raw?v:pct(v,total)+' %'}</span></div>`).join('')}</div>`;
+}
+function priceStrip(){
+  const lo=40, hi=170, x = p => (100*(p-lo)/(hi-lo)).toFixed(2)+'%';
+  const stack = {}; const dots = S.prices.map(p => { const k = Math.round(p/5)*5; stack[k]=(stack[k]||0)+1; return `<span class="d" style="left:${x(p)};bottom:${(stack[k]-1)*8}px" title="${p} €"></span>`; }).join('');
+  const ticks = [40,60,80,100,120,140,160].map(t=>`<span class="tk" style="left:${x(t)}">${t} €</span>`).join('');
+  return `<div class="strip" role="img" aria-label="Distribution des prix par séance : médiane ${S.medPrice} €, Nicolas 70 €">
+     <span class="band" style="left:${x(90)};width:calc(${x(140)} - ${x(90)})" title="Fourchette couple marché expat : 90-140 €"></span>
+     ${dots}<span class="axis"></span>${ticks}
+     <span class="mark" style="left:${x(70)}"><span>Nicolas · individuel 70 €</span></span>
+     <span class="mark c" style="left:${x(80)};top:28px"><span>couple 80 €</span></span></div>
+   <div class="keyline"><span><i style="background:var(--other);border-radius:50%;width:10px"></i>Prix individuel publié (${S.prices.length} profils)</span><span><i style="background:var(--direct-soft)"></i>Prix couple courant, marché expat (90-140 €)</span><span><i style="background:var(--nico)"></i>Nicolas</span></div>`;
+}
+
+/* ---------- Nicolas section ---------- */
+function renderNico(){
+  const specRows = NICO.spec.map(t => [t, S.specF.get(t)||0]).sort((a,b)=>a[1]-b[1]);
+  const apprRows = NICO.appr.map(t => [t, S.apprF.get(t)||0]).sort((a,b)=>a[1]-b[1]);
+  const top = [...DATA].sort((a,b)=>b.score-a.score).slice(0,12);
+  const revTop = DATA.filter(o=>o.reviews && o.type==='individual').sort((a,b)=>b.reviews-a.reviews).slice(0,8).map(o=>[o.name,o.reviews]);
+  revTop.push(['Nicolas Ruzette', 0]);
+  const tapie = DATA.find(o=>/Sylvain Tapie/.test(o.name));
+  document.getElementById('nico-body').innerHTML = `
+  <div class="panel">
+    <div class="hero">
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <span class="eyebrow">Analyse de positionnement</span>
+        <h2>Un profil rare, que presque personne ne peut trouver.</h2>
+        <div class="verdict">
+          <p>Nicolas combine des choses que le marché propose rarement ensemble : il travaille en français, anglais et espagnol, fait de la thérapie de couple et de la neurodiversité adulte, et ajoute une approche corporelle et vocale. Sur ${S.n} profils relevés, aucun psychologue francophone ne réunit couple et neurodiversité.</p>
+          <p>Son problème ne tient pas à l'offre mais à la visibilité. Il n'a aucun avis public, il est absent des plateformes où les patients cherchent, ses adresses en ligne se contredisent et ses numéros d'inscription n'apparaissent nulle part. Les psychologues les plus visibles de la ville ont entre 150 et 260 avis.</p>
+        </div>
+      </div>
+      <div class="idcard">
+        <span class="eyebrow">Fiche</span>
+        <dl class="kv">
+          <dt>Cabinet</dt><dd>Plaça d'Urquinaona 10, 2-1 (Eixample)</dd>
+          <dt>Langues</dt><dd>Français, anglais, espagnol</dd>
+          <dt>Formation</dt><dd>UCLouvain (psychologie clinique, neuropsychologie) · UB · UdG · Tarragone</dd>
+          <dt>Parcours</dt><dd>Barcelone depuis 2009 · libéral depuis 2013 · Centre Hestia 2014-2018</dd>
+          <dt>Tarifs</dt><dd><span class="num">70 €</span> individuel · <span class="num">80 €</span> couple 60 min · <span class="num">120 €</span> couple 90 min</dd>
+          <dt>Formats</dt><dd>Cabinet, Zoom/Teams/Skype/WhatsApp, lun-ven 9h-21h</dd>
+        </dl>
+        <button class="reset" id="openNico" style="align-self:flex-start">Voir sa fiche sur la carte</button>
+      </div>
+    </div>
+    <div class="tiles">
+      <div class="tile n"><span class="v num">${S.tri}<small> / ${S.n}</small></span><span class="l">profils trilingues FR-EN-ES comme lui</span><span class="s">${pct(S.tri,S.n)} % du relevé</span></div>
+      <div class="tile n"><span class="v num">${S.frCoupleNeuro}</span><span class="l">francophone faisant couple + neurodiversité</span><span class="s">${S.coupleNeuro} toutes langues confondues</span></div>
+      <div class="tile n"><span class="v num">0<small> avis</small></span><span class="l">contre une médiane de ${S.medIndivRev} avis</span><span class="s">pour les ${S.indivRev.length} psychologues individuels qui en ont</span></div>
+      <div class="tile n"><span class="v num">70<small> €</small></span><span class="l">même niveau que la médiane (${S.medPrice} €)</span><span class="s">mais 80 € en couple, sous le marché expat</span></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Forces et faiblesses</h2>
+    <p class="lead">Ce qui joue pour et contre lui quand un patient cherche un psychologue à Barcelone, d'après le relevé.</p>
+    <div class="swot">
+      <div class="box s"><h3>Forces</h3><ul>
+        <li><b>Trilingue et expatrié lui-même</b><span>Seuls ${S.tri} profils sur ${S.n} couvrent FR, EN et ES. Il vit l'expatriation depuis 2009, ce qui crédibilise son discours auprès des expats (26,6 % de la population de Barcelone).</span></li>
+        <li><b>Une combinaison de niches rare</b><span>Couple LGBTQ+ et polyamoureux (${S.specF.get('Non-monogamie')||0} profils citent la non-monogamie), neurodiversité adulte, corps et voix (${S.apprF.get('Corps / somatique')||0} profils somatiques). Le relevé ne trouve aucun psychologue diplômé qui combine somatique et couples LGBTQ+/polyamoureux.</span></li>
+        <li><b>Socle académique solide</b><span>UCLouvain avec neuropsychologie, co-auteur d'un article dans Biological Psychology (2011), formations auprès de Greenberg, Porges, Seikkula et Elkaïm. Peu de concurrents peuvent en dire autant.</span></li>
+        <li><b>12 ans d'expérience en libéral</b><span>Avec un passage au Centre Hestia, la référence internationale de la ville.</span></li>
+        <li><b>Cabinet très central</b><span>Urquinaona (métro L1/L4, à côté de Plaça Catalunya), horaires larges jusqu'à 21h, en ligne sur 4 outils.</span></li>
+        <li><b>Groupes</b><span>Seuls ${S.groups} acteurs du relevé proposent des groupes, presque tous des centres ou associations. Aucun groupe pour femmes TDAH n'a été trouvé.</span></li>
+        <li><b>Deux livres</b><span>Un vrai différenciateur d'autorité, s'ils sont publiés et trouvables.</span></li>
+      </ul></div>
+      <div class="box w"><h3>Faiblesses</h3><ul>
+        <li><b>Aucune preuve sociale</b><span>0 avis Google ou Doctoralia trouvé, seulement 4 témoignages sur son propre site. Les leaders ont 150 à 260 avis Doctoralia, et entre eux c'est le volume d'avis qui fait la différence (tout le monde a 5/5).</span></li>
+        <li><b>Absent des plateformes de recherche</b><span>Pas de profil Doctoralia (canal n°1 en Espagne), ni Psychology Today (171 psys à Barcelone), ni TopDoctors, ni TherapyRoute, alors que c'est par là que les expats trouvent un thérapeute.</span></li>
+        <li><b>Identité numérique éclatée</b><span>Cinq domaines, dont deux morts et deux qui le situent à Bruxelles. Le site anglais est figé depuis 2020 avec du texte de modèle oublié (« financial freedom »). Trois adresses différentes circulent (Urquinaona, Diagonal 343, Ronda Sant Antoni 80), ce qui nuit au référencement local.</span></li>
+        <li><b>Inscription invisible</b><span>Ni n° COPC, ni titre de Psicólogo General Sanitario, ni autorisation du registre sanitaire n'apparaissent. ${pct(S.visible,S.n)} % des profils relevés les affichent. C'est aussi ce que demandent les assurances expat (Cigna, Allianz) pour rembourser.</span></li>
+        <li><b>Offre trop large</b><span>Sept axes de travail et un discours poétique (« cesser de se réparer ») qui ne correspond à aucune requête qu'un patient tape dans Google. Il est difficile de savoir pour quoi le recommander en premier.</span></li>
+        <li><b>Pas de bilan diagnostique</b><span>La demande TDAH/TSA adulte passe d'abord par le diagnostic (150 à 800 € dans les centres). Sans bilan ni partenaire identifié, il arrive après le concurrent qui a posé le diagnostic.</span></li>
+        <li><b>Contenu inexistant depuis 2014-2020</b><span>Une série YouTube en 2014, un blog en 2020, des livres introuvables.</span></li>
+        <li><b>Un homonyme de positionnement dans l'immeuble</b><span>${tapie?esc(tapie.name):'Un psychologue francophone'} exerce au 3e étage du même immeuble, avec un site au gabarit quasi identique et les mêmes horaires. Le risque de confusion est réel.</span></li>
+      </ul></div>
+      <div class="box o"><h3>Opportunités</h3><ul>
+        <li><b>Des expats en nombre record</b><span>460 000 résidents étrangers, 26,6 % de la ville. 38 900 Français inscrits au consulat (estimation 60-80 000 réels). L'annuaire francophone de référence ne compte que 32 thérapeutes.</span></li>
+        <li><b>Neurodiversité adulte en forte hausse</b><span>Diagnostics tardifs (femmes de 40-60 ans qui masquent), listes d'attente jusqu'à 6 mois, DKV qui couvre la psychothérapie TSA/TDAH depuis 2026. Il y a très peu d'offre en français ou en anglais.</span></li>
+        <li><b>Place libre en EFT de couple</b><span>Aucun thérapeute certifié ICEEFT n'a été trouvé à Barcelone, et ceux qui affichent l'EFT sont souvent des counsellors non psychologues.</span></li>
+        <li><b>Assurances expat</b><span>Les expats sont remboursés sur facture avec diagnostic et titre. Un tarif plus élevé reste alors acceptable pour le patient.</span></li>
+      </ul></div>
+      <div class="box t"><h3>Menaces</h3><ul>
+        <li><b>Plateformes low-cost</b><span>Unobravo, ifeel et TherapyChat proposent la séance à 45-60 € avec un marketing massif et un premier appel gratuit.</span></li>
+        <li><b>Offre en hausse</b><span>Le nombre de psychologues sanitaires inscrits a augmenté de 8,6 % en 2025 en Espagne.</span></li>
+        <li><b>Coachs et counsellors non diplômés</b><span>Ils occupent les mêmes annuaires expat, avec un discours proche.</span></li>
+        <li><b>Risque réglementaire</b><span>Sans titre sanitaire affiché ni local inscrit au Registre sanitaire (Décret 151/2017), il s'expose à une plainte ou à un refus de remboursement.</span></li>
+      </ul></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Ce qui le rend rare</h2>
+    <p class="lead">Part des ${S.n} profils relevés qui proposent chacune de ses spécialités et approches. Plus la barre est courte, plus il est rare sur ce point.</p>
+    <div class="grid2">
+      <div><h3 style="margin-bottom:10px">Spécialités</h3>${bars(specRows, new Set(NICO.spec), S.n, {max:S.n})}</div>
+      <div><h3 style="margin-bottom:10px">Approches</h3>${bars(apprRows, new Set(NICO.appr), S.n, {max:S.n})}</div>
+    </div>
+    <p class="note">Les étiquettes sont normalisées à partir des descriptions publiques de chaque profil. Un profil qui ne publie pas ses approches compte comme ne les proposant pas.</p>
+  </div>
+
+  <div class="grid2">
+    <div class="panel">
+      <h2>Prix</h2>
+      <p class="lead">Sa séance individuelle est au prix médian. En couple, il est sous le marché.</p>
+      ${priceStrip()}
+      <p class="note">${S.cheaperOrEq} des ${S.prices.length} profils qui publient un prix facturent 70 € ou moins. Côté expats, la séance individuelle se situe entre 70 et 130 €, et la séance de couple entre 90 et 140 € (myexpatmind.com, 2026).</p>
+    </div>
+    <div class="panel">
+      <h2>Visibilité</h2>
+      <p class="lead">Avis publics : les psychologues individuels les plus visibles face à Nicolas.</p>
+      ${bars(revTop, new Set(['Nicolas Ruzette']), 1, {raw:true, label:k=>k.replace(/\s*\(.*\)/,'')})}
+      <p class="note">Les centres (Torguet : ~4 500 avis) et les plateformes (Unobravo : ~8 900 avis) sont exclus pour garder l'échelle lisible.</p>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Ses concurrents les plus proches</h2>
+    <p class="lead">Classement par proximité (0-100) : spécialités en commun (40 %), approches en commun (25 %), langues (35 %, le français pesant le plus). ${S.direct} profils dépassent 60 et sont marqués en bleu sur la carte.</p>
+    <div class="tbl"><table><thead><tr><th>Profil</th><th>Proximité</th><th>Langues</th><th>En commun</th><th>Prix</th><th>Avis</th></tr></thead><tbody>
+      ${top.map(o=>`<tr class="click" data-id="${o.id}"><td><b>${esc(o.name)}</b><br><span class="note">${esc(o.district||TYPEN[o.type]||'')}</span></td><td class="num">${o.score}</td><td>${o.langs.map(l=>`<span class="lang">${l}</span>`).join(' ')}</td><td>${[...o.sharedSpec,...o.sharedAppr].slice(0,5).map(t=>`<span class="tag shared">${esc(t)}</span>`).join(' ')}</td><td class="num">${o.price?o.price+' €':'—'}</td><td class="num">${o.reviews||'—'}</td></tr>`).join('')}
+    </tbody></table></div>
+  </div>
+
+  <div class="panel">
+    <h2>Plan d'action</h2>
+    <p class="lead">Par ordre de priorité : d'abord ce qui ne coûte presque rien et débloque tout le reste.</p>
+    <div class="plan">
+      <div class="step"><div><h3>Unifier sa présence en un seul site trilingue</h3><p>Le nouveau site (FR/EN/ES, Urquinaona) devient l'unique adresse. Rediriger expatpsychotherapy.com et le site bruxellois en 301 vers les bonnes pages, laisser expirer les domaines morts, et corriger ou supprimer les fiches psico.org, MundoPsicologos et Expat.com qui portent d'anciennes adresses et un prix de 40 €.</p><div class="meta"><span class="tag">Effort faible</span><span class="tag shared">Impact élevé</span><span class="tag">Semaine 1-2</span></div></div></div>
+      <div class="step"><div><h3>Afficher ses titres</h3><p>Mettre le n° COPC, le titre de Psicólogo General Sanitario (ou l'habilitation) et le n° d'autorisation du Registre sanitaire sur le site, les factures et chaque annuaire. Prévoir un modèle de facture accepté par Cigna, Allianz Care et les mutuelles françaises. Si l'un de ces titres manque, régulariser en priorité (reconnaissance UE auprès du Ministerio de Sanidad).</p><div class="meta"><span class="tag">Effort faible</span><span class="tag shared">Impact élevé</span><span class="tag">Semaine 1-4</span></div></div></div>
+      <div class="step"><div><h3>Construire la preuve sociale</h3><p>Créer une fiche Google Business à l'adresse d'Urquinaona et demander systématiquement un avis aux patients en fin de suivi. Ouvrir Doctoralia (89 à 129 € par mois, prise de rendez-vous en ligne), Psychology Today et TherapyRoute. Objectif : 30 avis en 6 mois.</p><div class="meta"><span class="tag">Effort moyen</span><span class="tag shared">Impact élevé</span><span class="tag">Mois 1-6</span></div></div></div>
+      <div class="step"><div><h3>Choisir deux portes d'entrée</h3><p>Garder les sept axes, mais n'en mettre que deux en vitrine, là où il est presque seul. Le premier : thérapie de couple pour couples internationaux, LGBTQ+ et non monogames, avec l'EFT. Le second : adultes neurodivergents, diagnostiqués tard, en français et en anglais. Chacun a sa page, ses mots-clés et son titre (« psychologue couple francophone Barcelone », « ADHD therapist Barcelona English »).</p><div class="meta"><span class="tag">Effort moyen</span><span class="tag shared">Impact élevé</span><span class="tag">Mois 1-2</span></div></div></div>
+      <div class="step"><div><h3>Nouer des partenariats de diagnostic</h3><p>Proposer le suivi thérapeutique après bilan aux centres qui diagnostiquent en anglais ou en français (MindPlace, Turó Park, Psicologia Montjuïc) et aux psychiatres anglophones. Ce sont eux qui voient les patients en premier.</p><div class="meta"><span class="tag">Effort moyen</span><span class="tag">Impact moyen</span><span class="tag">Mois 2-4</span></div></div></div>
+      <div class="step"><div><h3>Lancer un groupe récurrent</h3><p>Un cycle de 8 séances, par exemple « femmes neurodivergentes » ou « voix et régulation », en français ou en anglais, à 25-40 € par personne. Il n'existe presque pas d'offre de ce type, il produit du contenu et des recommandations, et rentabilise mieux une heure de travail.</p><div class="meta"><span class="tag">Effort moyen</span><span class="tag">Impact moyen</span><span class="tag">Mois 3-6</span></div></div></div>
+      <div class="step"><div><h3>Rendre ses livres et sa voix visibles</h3><p>Publier les deux livres (ISBN, Amazon/KDP, page dédiée sur le site), reprendre le format « Hablamos Barcelona » en vidéos courtes tournées en extérieur, et citer l'article de Biological Psychology dans sa biographie.</p><div class="meta"><span class="tag">Effort élevé</span><span class="tag">Impact moyen</span><span class="tag">Continu</span></div></div></div>
+      <div class="step"><div><h3>Ajuster les tarifs</h3><p>Une fois les avis et les titres en place, passer le couple à 90-100 € (60 min) et 130-140 € (90 min). C'est encore dans la fourchette du marché, et le prix bas peut aujourd'hui passer pour un signal de moindre qualité.</p><div class="meta"><span class="tag">Effort faible</span><span class="tag">Impact moyen</span><span class="tag">Mois 6</span></div></div></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Pour mieux faire son travail</h2>
+    <div class="swot">
+      <div class="box o"><ul>
+        <li><b>Se certifier en EFT (ICEEFT)</b><span>Il serait le premier psychologue certifié à Barcelone, ce qui donne à la fois une compétence et un argument que personne d'autre n'a.</span></li>
+        <li><b>Mesurer les résultats</b><span>Utiliser ORS/SRS ou CORE-10 en début et fin de suivi. Les données servent aussi d'argument face aux plateformes.</span></li>
+      </ul></div>
+      <div class="box o"><ul>
+        <li><b>Supervision et intervision</b><span>Rejoindre un réseau de pairs anglophones (Barcelona NEST, 6 membres) ou francophones pour échanger des orientations et rompre l'isolement du libéral.</span></li>
+        <li><b>Un réseau médical</b><span>Un psychiatre partenaire pour les traitements TDAH, et des centres de bilan pour les diagnostics. C'est la condition pour suivre des patients neurodivergents de bout en bout.</span></li>
+      </ul></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Son empreinte en ligne aujourd'hui</h2>
+    <div class="tbl"><table><thead><tr><th>Où</th><th>État</th><th>Constat</th></tr></thead><tbody>
+      ${MARKET.footprint.map(r=>`<tr><td><b>${esc(r[0])}</b></td><td><span class="pill ${r[1]}">${esc(r[2])}</span></td><td>${esc(r[3])}</td></tr>`).join('')}
+    </tbody></table></div>
+  </div>`;
+  document.getElementById('openNico').onclick = () => { document.getElementById('t-explore').click(); setTimeout(()=>openProfile(0), 50); };
+  document.querySelectorAll('#nico-body tr.click').forEach(tr => tr.onclick = () => openProfile(+tr.dataset.id));
+}
+
+/* ---------- market ---------- */
+function renderMarket(){
+  const spec = [...S.specF].sort((a,b)=>b[1]-a[1]);
+  const appr = [...S.apprF].sort((a,b)=>b[1]-a[1]);
+  const langs = [...S.langF].sort((a,b)=>b[1]-a[1]).slice(0,8);
+  const dist = new Map(); DATA.forEach(o => { const d = o.district && DNAME_INV[o.district] ? o.district : (o.geo==='none' ? 'Sans adresse / en ligne' : (o.district||'Autre')); dist.set(d,(dist.get(d)||0)+1); });
+  document.getElementById('market-body').innerHTML = `
+  <div class="panel">
+    <span class="eyebrow">Le marché en chiffres</span>
+    <h2>${S.n} psychologues et centres relevés</h2>
+    <p class="lead">Ce n'est pas un recensement : le COPC compte plusieurs milliers d'inscrits en Catalogne. C'est un échantillon des acteurs visibles en ligne, ciblé sur les segments où Nicolas est en concurrence.</p>
+    <div class="tiles">
+      <div class="tile"><span class="v num">${S.medPrice}<small> €</small></span><span class="l">prix médian d'une séance individuelle</span><span class="s">${S.prices.length} profils publient un prix (${S.prices[0]}-${S.prices[S.prices.length-1]} €)</span></div>
+      <div class="tile"><span class="v num">${pct(S.visible,S.n)}<small> %</small></span><span class="l">affichent leur inscription (COPC, PGS)</span><span class="s">${S.visible} profils</span></div>
+      <div class="tile"><span class="v num">${S.medIndivRev}</span><span class="l">avis médians d'un psy individuel qui en a</span><span class="s">${S.indivRev.length} profils individuels avec avis</span></div>
+      <div class="tile"><span class="v num">${pct(S.fr,S.n)}<small> %</small></span><span class="l">consultent en français</span><span class="s">${S.fr} profils, dont un relevé ciblé francophone</span></div>
+    </div>
+  </div>
+  <div class="grid2">
+    <div class="panel"><h2>Spécialités</h2><p class="lead">Part des profils. En orange, celles de Nicolas.</p>${bars(spec, new Set(NICO.spec), S.n, {max:S.n})}</div>
+    <div class="panel"><h2>Approches</h2><p class="lead">La TCC domine. Les approches émotionnelles et corporelles restent minoritaires.</p>${bars(appr, new Set(NICO.appr), S.n, {max:S.n})}
+      <h2 style="margin-top:12px">Langues</h2>${bars(langs, new Set(NICO.langs), S.n, {max:S.n, label:k=>LANGN[k]||k})}</div>
+  </div>
+  <div class="grid2">
+    <div class="panel"><h2>Où ils exercent</h2><p class="lead">L'Eixample concentre la majorité des cabinets.</p>${bars([...dist].sort((a,b)=>b[1]-a[1]), new Set(['Eixample']), S.n, {raw:true})}</div>
+    <div class="panel"><h2>Repères de prix</h2><div class="tbl"><table><thead><tr><th>Repère</th><th>Prix</th></tr></thead><tbody>
+      ${MARKET.prices.map(p=>`<tr><td>${esc(p.item)}<br><a class="note" href="${esc(p.source.split(' ')[0])}" target="_blank" rel="noopener">source</a></td><td class="num">${esc(p.value)}</td></tr>`).join('')}
+    </tbody></table></div></div>
+  </div>
+  <div class="panel"><h2>Tendances de la demande</h2><div class="swot">
+    ${MARKET.trends.map(t=>`<div class="box o"><h3>${esc(t.trend)}</h3><p style="font-size:.9rem;color:var(--ink-2)">${esc(t.detail)}</p></div>`).join('')}
+  </div></div>
+  <div class="panel"><h2>Ce qu'il faut pour exercer en Espagne</h2><ul style="margin:0;padding-left:18px;display:flex;flex-direction:column;gap:8px;max-width:80ch;color:var(--ink-2)">
+    ${MARKET.legal.map(l=>`<li>${esc(l)}</li>`).join('')}</ul></div>
+  <div class="panel"><h2>Comment les patients trouvent un psy</h2><div class="tbl"><table><thead><tr><th>Canal</th><th>Ce qu'il faut savoir</th></tr></thead><tbody>
+    ${MARKET.channels.map(c=>`<tr><td><b>${esc(c.channel)}</b></td><td>${esc(c.detail)}</td></tr>`).join('')}</tbody></table></div></div>`;
+}
+const DNAME_INV = Object.fromEntries(Object.values(DNAME).map(v=>[v,1]));
+
+/* ---------- method ---------- */
+function renderMethod(){
+  const segs = counts('segments');
+  const geo = {address:0,postcode:0,district:0,none:0}; DATA.forEach(o=>geo[o.geo]++);
+  const srcs = [...new Set(DATA.flatMap(o=>o.sources||[]))].sort();
+  document.getElementById('method-body').innerHTML = `
+  <div class="panel"><h2>Comment ces données ont été collectées</h2>
+    <p class="lead">Six recherches web menées en parallèle le 13 octobre 2026 : psychologues anglophones et expats, francophones, neurodiversité adulte, couples, LGBTQ+ et somatique, marché général (Doctoralia, TopDoctors, grands centres, plateformes en ligne), et l'empreinte en ligne de Nicolas avec le cadre légal. Les profils ont ensuite été fusionnés, dédoublonnés et géocodés via OpenStreetMap.</p>
+    <div class="grid2">
+      <div><h3 style="margin-bottom:10px">Profils par segment</h3>${bars(segs, null, S.n, {raw:true})}</div>
+      <div><h3 style="margin-bottom:10px">Précision de la position</h3>${bars([['Adresse exacte',geo.address],['Code postal',geo.postcode],['Quartier (approx.)',geo.district],['Non placé',geo.none]], null, S.n, {raw:true})}</div>
+    </div>
+  </div>
+  <div class="panel"><h2>Limites</h2><ul style="margin:0;padding-left:18px;display:flex;flex-direction:column;gap:8px;max-width:80ch;color:var(--ink-2)">
+    <li>C'est un échantillon. Les psychologues sans présence web, ou présents uniquement sur Doctoralia sans classement, sont sous-représentés.</li>
+    <li>Prix, avis et titres ne sont renseignés que lorsqu'ils sont publiés. Un champ vide veut dire « non trouvé », pas « inexistant ».</li>
+    <li>Plusieurs plateformes (LinkedIn, Instagram, Google Maps, TopDoctors) bloquent la lecture automatique. Le nombre d'avis Google de Nicolas, en particulier, est à vérifier à la main.</li>
+    <li>Le statut « inscription non affichée » ne veut pas dire que la personne n'est pas inscrite, seulement que l'information n'est pas visible.</li>
+    <li>Le score de proximité est un indicateur construit pour cette analyse, pas une mesure officielle.</li>
+  </ul></div>
+  <div class="panel"><details class="src"><summary>${srcs.length} sources consultées</summary><ul>${srcs.map(s=>`<li><a href="${esc(s)}" target="_blank" rel="noopener">${esc(s.replace(/^https?:\/\/(www\.)?/,'').slice(0,80))}</a></li>`).join('')}</ul></details></div>`;
+}
+
+/* ---------- OpenStreetMap mode (standalone page only: tiles are external) ---------- */
+if (window.MAP_MODE === 'osm' && window.L) {
+  const svgEl = document.getElementById('map'), lEl = document.getElementById('lmap');
+  svgEl.style.display = 'none'; lEl.hidden = false;
+  const cssVar = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim() || getComputedStyle(document.body).getPropertyValue(n).trim();
+  const dark = () => cssVar('color-scheme') === 'dark' || document.documentElement.dataset.theme === 'dark' || (!document.documentElement.dataset.theme && matchMedia('(prefers-color-scheme: dark)').matches);
+  const lmap = L.map(lEl, { zoomControl: false, attributionControl: true, minZoom: 11, maxZoom: 19 }).setView([41.395, 2.165], 13);
+  const tiles = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19, attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+  }).addTo(lmap);
+  if (dark()) lEl.classList.add('dark-tiles');
+  const layer = L.layerGroup().addTo(lmap);
+  const markers = new Map();
+  const col = o => cssVar(o.isNico ? '--nico' : o.direct ? '--direct' : '--other');
+  const style = (o, hl) => ({ radius: o.isNico ? 10 : o.direct ? 7 : 6, color: hl ? cssVar('--ink') : '#ffffff', weight: hl ? 3 : o.isNico ? 3 : 1.5,
+    fillColor: col(o), fillOpacity: o.geo === 'address' || o.isNico ? 0.95 : 0.7 });
+  updateMap = function () {
+    layer.clearLayers(); markers.clear();
+    const data = pts().sort((a, b) => (a.isNico ? 2 : a.direct ? 1 : 0) - (b.isNico ? 2 : b.direct ? 1 : 0));
+    data.forEach(o => {
+      const m = L.circleMarker([o.lat, o.lng], style(o, false)).addTo(layer);
+      m.bindTooltip(o.isNico ? 'Nicolas Ruzette' : `${esc(o.name)} · proximité ${o.score}`, { direction: 'top', offset: [0, -6] });
+      m.on('click', () => openProfile(o.id));
+      markers.set(o.id, m);
+    });
+    const off = VIS.filter(o => !o.lat).length;
+    document.getElementById('mapcount').innerHTML = `<b class="num">${VIS.filter(o=>o.lat).length}</b> sur la carte${off?` · <span class="note">${off} sans adresse (dans la liste)</span>`:''}`;
+  };
+  highlight = function (id) {
+    markers.forEach((m, k) => { const o = ALL.find(x => x.id === k); m.setStyle(style(o, k === id)); if (k === id) m.bringToFront(); });
+  };
+  drawMap = function () { lmap.invalidateSize(); };
+  const baseOpen = openProfile;
+  openProfile = function (id) { baseOpen(id); const m = markers.get(id); if (m && exp.dataset.view !== 'list') lmap.panTo(m.getLatLng(), { animate: true }); };
+  document.getElementById('zin').onclick = () => lmap.zoomIn();
+  document.getElementById('zout').onclick = () => lmap.zoomOut();
+  document.getElementById('zreset').onclick = () => lmap.setView([41.395, 2.165], 13);
+  new ResizeObserver(() => lmap.invalidateSize()).observe(lEl);
+}
+
+renderNico(); renderMarket(); renderMethod(); apply();
+</script>
