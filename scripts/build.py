@@ -74,7 +74,8 @@ def js(o):  # safe inside <script type="application/json">
 
 html = open(D('src/template.html'), encoding='utf-8').read()
 html = (html.replace('__DATA__', js(data)).replace('__BARRIS__', js(load('data/barris.json')))
-        .replace('__DISTRICTS__', js(load('data/districts.json'))).replace('__MARKET__', js(market))
+        .replace('__DISTRICTS__', js(load('data/districts.json')))
+        .replace('__MUNICIPIS__', js(load('data/municipis.json') if os.path.exists(D('data/municipis.json')) else {'type':'FeatureCollection','features':[]})).replace('__MARKET__', js(market))
         .replace('__N__', str(len(data))))
 HEAD = """<!doctype html>
 <html lang="fr">

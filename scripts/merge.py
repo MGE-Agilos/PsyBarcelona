@@ -3,7 +3,9 @@ sys.path.insert(0, os.path.dirname(__file__))
 from geo2 import locate
 R = 'research'
 SEG = {'seg_expat': 'Anglophone / expats', 'seg_french': 'Francophone', 'seg_neuro': 'Neurodiversité',
-       'seg_couples': 'Couples · LGBTQ+ · somatique', 'seg_general': 'Marché général'}
+       'seg_couples': 'Couples · LGBTQ+ · somatique', 'seg_general': 'Marché général',
+       'seg_valles': 'Région · Vallès', 'seg_baix': 'Région · Baix Llobregat & côte', 'seg_nord': 'Région · Barcelonès nord & Maresme',
+       'seg_quartiers': 'Barcelone · autres quartiers', 'seg_intl2': 'International (2e vague)'}
 
 def norm(s):
     return re.sub(r'[^a-z ]', '', unicodedata.normalize('NFKD', s).encode('ascii', 'ignore').decode().lower()).strip()
@@ -71,7 +73,7 @@ def tags(items, table):
 
 def status(x):
     c = ' '.join(x.get('credentials') or []).lower() + ' ' + (x.get('notable') or '').lower()
-    if re.search(r'not (a )?licensed|non-psychologist|not listed as psycholog|complementary therapist|not a psychologist|counsell?or \(non|not a licensed', c) \
+    if re.search(r'not (a )?licensed|non-psychologist|not listed as psycholog|complementary therapist|not a psychologist|counsell?or \(non|not a licensed|not (a )?registered|no copc|intern|registered (only )?in (italy|the uk|australia)|expired|gestalt therapist, not|medical doctor', c) \
             and not re.search(r'copc \d|general sanitari', c):
         return 'Non psychologue'
     if re.search(r'copc|col\.|colegiad|general sanitari|sanitari|licen[cs]e \d|\bpir\b|cop ', c):
@@ -103,15 +105,31 @@ DC = {'Eixample': (41.3888, 2.1620), 'Gràcia': (41.4036, 2.1546), 'Sarrià-Sant
 random.seed(7)
 out = []
 for i, x in enumerate(merged.values()):
-    v, prec = locate(x.get('address'))
     d = x.get('district') or ''
+    town = x.get('municipality') or ''
+    if not town:
+        a = (x.get('address') or '')
+        town = 'Barcelona' if (d in DC or d in ('online only', '') or 'barcelona' in a.lower()) else d
+    if town.lower().startswith('barcelona'):
+        town = 'Barcelona'
+    if town == 'Barcelona' and d not in DC:
+        d = '' if d != 'online only' else d
+    if town != 'Barcelona':
+        d = ''
+    v, prec = locate(x.get('address'), town)
+    if v:
+        import math
+        from geo2 import nom
+        c = [41.395, 2.165] if town == 'Barcelona' else nom({'q': town + ', Barcelona, Catalunya'})
+        if c and math.hypot((v[0]-c[0])*111, (v[1]-c[1])*83) > (9 if town == 'Barcelona' else 6):
+            v, prec = None, 'none'
     if not v and d in DC:
         v = [DC[d][0] + random.uniform(-.004, .004), DC[d][1] + random.uniform(-.004, .004)]
         prec = 'district'
     blob_s = (x.get('specialties') or []) + [p for p in (x.get('populations') or []) if re.search(r'lgb|lgt|expat|child|adolesc|neuro|autis|adhd', p.lower())]
     out.append({
         'id': i + 1, 'name': x['name'], 'type': x.get('type'), 'centre': x.get('centre'),
-        'address': x.get('address'), 'district': d or None,
+        'address': x.get('address'), 'municipality': town or None, 'district': d or None,
         'lat': round(v[0], 5) if v else None, 'lng': round(v[1], 5) if v else None, 'geo': prec,
         'langs': sorted(set(LANG[l.lower()] for l in x.get('languages') or [] if l.lower() in LANG)),
         'spec': tags(blob_s, SPEC), 'appr': tags(x.get('approaches'), APP),

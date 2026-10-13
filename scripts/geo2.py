@@ -10,7 +10,7 @@ def nom(params):
     except Exception as e: print('ERR',e); return None
     time.sleep(1.1)
     v=[float(r[0]['lat']),float(r[0]['lon'])] if r else None
-    if v and not (41.3<v[0]<41.48 and 2.04<v[1]<2.25): v=None
+    if v and not (41.1<v[0]<41.8 and 1.6<v[1]<2.7): v=None
     cache[key]=v; json.dump(cache,open(cp,'w',encoding='utf-8'),ensure_ascii=False); return v
 def parse(a):
     a=re.split(r';|\(| also | and |previously',a)[0]
@@ -21,18 +21,26 @@ def parse(a):
     m=re.match(r'\s*([^,\d]+?)[\s,]+(\d+)',a)
     if not m: return None,None,pc
     return m.group(1).strip(' ,'), m.group(2), pc
-def locate(addr):
-    if not addr: return None,'none'
+def locate(addr, town='Barcelona'):
+    town = town or 'Barcelona'
+    if not addr:
+        if town != 'Barcelona':
+            v=nom({'q':f'{town}, Barcelona, Catalunya'})
+            if v: return v,'town'
+        return None,'none'
     st,num,pc=parse(addr)
     if st:
-        v=nom({'street':f'{num} {st}','city':'Barcelona'})
+        v=nom({'street':f'{num} {st}','city':town})
         if v: return v,'address'
         st2=re.sub(r'^(Carrer|Avinguda|Plaça|Passeig|Ronda|Rambla|Via|Travessera|Gran Via)\s+(de la |de les |del |de |d\'|dels )?','',st,flags=re.I)
-        v=nom({'q':f'{st2} {num}, Barcelona'})
+        v=nom({'q':f'{st2} {num}, {town}'})
         if v: return v,'address'
     if pc:
-        v=nom({'postalcode':pc,'city':'Barcelona'})
+        v=nom({'postalcode':pc,'city':town})
         if v: return v,'postcode'
+    if town != 'Barcelona':
+        v=nom({'q':f'{town}, Barcelona, Catalunya'})
+        if v: return v,'town'
     return None,'none'
 if __name__=='__main__':
     import glob

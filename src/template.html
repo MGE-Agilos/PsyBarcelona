@@ -10,7 +10,7 @@
   --bg:#f3f5f7; --surface:#ffffff; --surface-2:#e9edf1; --ink:#15202b; --ink-2:#465462; --muted:#6f7c89; --line:#d9dfe5;
   --nico:#d4541f; --direct:#2a78d6; --other:#9aa6b2; --good:#1f8a4c; --warn:#b07400; --bad:#c43c3b;
   --nico-soft:#fbe7dd; --direct-soft:#dde9f8; --chip:#eef1f4;
-  --land:#e4e9ee; --land-line:#ffffff; --district-line:#8c99a6; --sea:#dbe6ee;
+  --land:#eceff2; --land-line:#ffffff; --district-line:#8c99a6; --sea:#c9d9e5;
   --f-display:'Fraunces',Georgia,'Times New Roman',serif;
   --f-body:'Public Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
   --f-mono:'IBM Plex Mono',ui-monospace,Consolas,monospace;
@@ -254,6 +254,7 @@ details.src ul{font-size:.8rem;columns:2;column-gap:28px;padding-left:18px}
       <div class="fgroup"><span class="flabel">Langues</span><div class="chips" id="f-langs"></div></div>
       <div class="fgroup"><span class="flabel">Spécialités</span><div class="chips" id="f-spec"></div></div>
       <div class="fgroup"><span class="flabel">Approches</span><div class="chips" id="f-appr"></div></div>
+      <div class="fgroup"><span class="flabel">Commune</span><div class="chips" id="f-town"></div></div>
       <div class="fgroup"><span class="flabel">Segment de recherche</span><div class="chips" id="f-seg"></div></div>
       <div class="fgroup"><span class="flabel">Type</span><div class="chips" id="f-type"></div></div>
       <div class="fgroup"><span class="flabel">Inscription officielle</span><div class="chips" id="f-status"></div></div>
@@ -305,11 +306,13 @@ details.src ul{font-size:.8rem;columns:2;column-gap:28px;padding-left:18px}
 <script id="data" type="application/json">__DATA__</script>
 <script id="barris" type="application/json">__BARRIS__</script>
 <script id="districts" type="application/json">__DISTRICTS__</script>
+<script id="municipis" type="application/json">__MUNICIPIS__</script>
 <script id="market-data" type="application/json">__MARKET__</script>
 <script>
 const DATA = JSON.parse(document.getElementById('data').textContent);
 const BARRIS = JSON.parse(document.getElementById('barris').textContent);
 const DISTRICTS = JSON.parse(document.getElementById('districts').textContent);
+const MUNICIPIS = JSON.parse(document.getElementById('municipis').textContent);
 const MARKET = JSON.parse(document.getElementById('market-data').textContent);
 const DNAME = {'01':'Ciutat Vella','02':'Eixample','03':'Sants-Montjuïc','04':'Les Corts','05':'Sarrià-Sant Gervasi','06':'Gràcia','07':'Horta-Guinardó','08':'Nou Barris','09':'Sant Andreu','10':'Sant Martí'};
 const LANGN = {FR:'Français',EN:'Anglais',ES:'Espagnol',CA:'Catalan',IT:'Italien',DE:'Allemand',PL:'Polonais',RU:'Russe',PT:'Portugais',TR:'Turc',NL:'Néerlandais',RO:'Roumain'};
@@ -319,7 +322,7 @@ const pct = (a,b) => b ? Math.round(100*a/b) : 0;
 /* ---------- Nicolas ---------- */
 const NICO = {
   id:0, name:'Nicolas Ruzette', type:'individual', isNico:true,
-  address:"Plaça d'Urquinaona 10, 2-1, 08010 Barcelona", district:'Eixample', lat:41.38878, lng:2.17322, geo:'address',
+  address:"Plaça d'Urquinaona 10, 2-1, 08010 Barcelona", municipality:'Barcelona', district:'Eixample', lat:41.38878, lng:2.17322, geo:'address',
   langs:['EN','ES','FR'],
   spec:['Couple','LGBTQ+','Non-monogamie','TDAH','Autisme','Haut potentiel','Hypersensibilité','Addictions','Dépendance affective','Expatriation & interculturel','Groupes','Corps & régulation','Anxiété & stress','Deuil & transitions'],
   appr:['Émotions (EFT)','CNV','Systémique','Corps / somatique','Créatif (art, drame, voix)','Intégrative','3e vague (ACT, DBT, pleine conscience)'],
@@ -352,7 +355,7 @@ const ALL = [NICO, ...DATA];
 const N = DATA.length;
 
 /* ---------- filters ---------- */
-const F = {q:'', langs:new Set(), spec:new Set(), appr:new Set(), seg:new Set(), type:new Set(), status:new Set(), pmax:170, onlyDirect:false};
+const F = {q:'', town:new Set(), langs:new Set(), spec:new Set(), appr:new Set(), seg:new Set(), type:new Set(), status:new Set(), pmax:170, onlyDirect:false};
 const TYPEN = {individual:'Individuel', centre:'Centre', 'online platform':'Plateforme en ligne'};
 function counts(key){ const m = new Map(); DATA.forEach(o => (Array.isArray(o[key])?o[key]:[o[key]]).forEach(v => v && m.set(v,(m.get(v)||0)+1))); return [...m].sort((a,b)=>b[1]-a[1]); }
 function buildChips(el, key, set, labelFn=(v)=>v, limit=99){
@@ -368,10 +371,11 @@ buildChips('f-langs','langs',F.langs,v=>LANGN[v]||v,10);
 buildChips('f-spec','spec',F.spec);
 buildChips('f-appr','appr',F.appr);
 buildChips('f-seg','segments',F.seg);
+buildChips('f-town','municipality',F.town,v=>v,14);
 buildChips('f-type','type',F.type,v=>TYPEN[v]||v);
 buildChips('f-status','status',F.status);
 const norm = s => String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();
-DATA.forEach(o => o._txt = norm([o.name,o.centre,o.address,o.district,o.notable,...o.specialties,...o.approaches,...o.education].join(' ')));
+DATA.forEach(o => o._txt = norm([o.name,o.centre,o.address,o.municipality,o.district,o.notable,...o.specialties,...o.approaches,...o.education].join(' ')));
 function pass(o){
   if (F.onlyDirect && !o.direct) return false;
   if (F.q && !o._txt.includes(norm(F.q))) return false;
@@ -379,13 +383,14 @@ function pass(o){
   for (const v of F.spec) if (!o.spec.includes(v)) return false;
   for (const v of F.appr) if (!o.appr.includes(v)) return false;
   if (F.seg.size && !o.segments.some(s => F.seg.has(s))) return false;
+  if (F.town.size && !F.town.has(o.municipality)) return false;
   if (F.type.size && !F.type.has(o.type)) return false;
   if (F.status.size && !F.status.has(o.status)) return false;
   if (F.pmax < 170 && o.price && o.price > F.pmax) return false;
   return true;
 }
 let VIS = DATA;
-function activeCount(){ return F.langs.size+F.spec.size+F.appr.size+F.seg.size+F.type.size+F.status.size+(F.q?1:0)+(F.onlyDirect?1:0)+(F.pmax<170?1:0); }
+function activeCount(){ return F.town.size+F.langs.size+F.spec.size+F.appr.size+F.seg.size+F.type.size+F.status.size+(F.q?1:0)+(F.onlyDirect?1:0)+(F.pmax<170?1:0); }
 function apply(){
   VIS = DATA.filter(pass);
   const ac = activeCount(); const fc = document.getElementById('fcount'); fc.hidden = !ac; fc.textContent = ac;
@@ -396,7 +401,7 @@ document.getElementById('onlyDirect').addEventListener('change', e => { F.onlyDi
 document.getElementById('pmax').addEventListener('input', e => { F.pmax = +e.target.value; document.getElementById('pmaxv').textContent = F.pmax>=170?'tous':F.pmax+' €'; apply(); });
 document.getElementById('sort').addEventListener('change', renderList);
 document.getElementById('reset').onclick = () => {
-  ['langs','spec','appr','seg','type','status'].forEach(k => F[k].clear()); F.q=''; F.pmax=170; F.onlyDirect=false;
+  ['town','langs','spec','appr','seg','type','status'].forEach(k => F[k].clear()); F.q=''; F.pmax=170; F.onlyDirect=false;
   document.getElementById('q').value=''; document.getElementById('pmax').value=170; document.getElementById('pmaxv').textContent='tous'; document.getElementById('onlyDirect').checked=false;
   document.querySelectorAll('.filters .chip').forEach(c => c.setAttribute('aria-pressed','false')); apply();
 };
@@ -411,7 +416,7 @@ function renderList(){
   const row = o => `<button class="row" data-id="${o.id}">
       <span class="mk" style="background:${color(o)}"></span>
       <span><span class="nm">${esc(o.name)}</span>
-        <span class="sub">${esc(o.isNico?'Psychologue clinicien · Urquinaona':[TYPEN[o.type]||'', o.district||(o.geo==='none'?'adresse non trouvée':'')].filter(Boolean).join(' · '))}</span>
+        <span class="sub">${esc(o.isNico?'Psychologue clinicien · Urquinaona':[TYPEN[o.type]||'', (o.municipality&&o.municipality!=='Barcelona'?o.municipality:o.district)||(o.geo==='none'?'adresse non trouvée':'')].filter(Boolean).join(' · '))}</span>
         <span class="tg">${o.langs.map(l=>`<span class="lang">${l}</span>`).join('')} ${(o.isNico?o.spec:o.spec).slice(0,4).map(t=>`<span class="tag${!o.isNico&&NS.has(t)?' shared':''}">${esc(t)}</span>`).join('')}</span></span>
       <span class="rt">${o.isNico?'<span class="score" style="color:var(--nico)">réf.</span>':`<span class="score">${o.score}</span>`}<br>${o.price?o.price+' €':'—'}<br>${o.reviews?o.reviews+' avis':''}</span>
     </button>`;
@@ -424,9 +429,9 @@ document.getElementById('rows').addEventListener('mouseleave', () => highlight(n
 /* ---------- map ---------- */
 const svg = d3.select('#map');
 const gRoot = svg.append('g');
-const gLand = gRoot.append('g'), gDist = gRoot.append('g'), gLab = gRoot.append('g'), gPts = gRoot.append('g');
+const gMun = gRoot.append('g'), gMunLab = gRoot.append('g'), gLand = gRoot.append('g'), gDist = gRoot.append('g'), gLab = gRoot.append('g'), gPts = gRoot.append('g');
 let proj, path, curK = 1, W = 0, H = 0;
-const zoom = d3.zoom().scaleExtent([1, 14]).on('zoom', ev => { gRoot.attr('transform', ev.transform); curK = ev.transform.k; resizeMarks(); });
+const zoom = d3.zoom().scaleExtent([0.2, 14]).on('zoom', ev => { gRoot.attr('transform', ev.transform); curK = ev.transform.k; resizeMarks(); });
 svg.call(zoom).on('dblclick.zoom', null);
 function drawMap(){
   const el = document.getElementById('map'); const r = el.getBoundingClientRect();
@@ -434,6 +439,9 @@ function drawMap(){
   W = r.width; H = r.height; svg.attr('viewBox', `0 0 ${W} ${H}`);
   proj = d3.geoMercator().fitExtent([[14,14],[W-14,H-14]], DISTRICTS);
   path = d3.geoPath(proj);
+  gMun.selectAll('path').data(MUNICIPIS.features).join('path').attr('d', path).attr('fill','var(--land)').attr('stroke','var(--district-line)').attr('stroke-width',1).attr('vector-effect','non-scaling-stroke');
+  gMunLab.selectAll('text').data(MUNICIPIS.features).join('text').attr('transform', d => `translate(${path.centroid(d)})`).attr('text-anchor','middle')
+    .attr('fill','var(--muted)').style('font-family','var(--f-body)').style('pointer-events','none').text(d => d.properties.n);
   gLand.selectAll('path').data(BARRIS.features).join('path').attr('d', path).attr('fill','var(--land)').attr('stroke','var(--land-line)').attr('stroke-width',.8).attr('vector-effect','non-scaling-stroke');
   gDist.selectAll('path').data(DISTRICTS.features).join('path').attr('d', path).attr('fill','none').attr('stroke','var(--district-line)').attr('stroke-width',1.1).attr('vector-effect','non-scaling-stroke');
   gLab.selectAll('text').data(DISTRICTS.features).join('text')
@@ -462,9 +470,11 @@ function updateMap(){
 }
 function resizeMarks(){
   const k = curK;
-  gPts.selectAll('.dot').attr('r', d => (d.isNico?8:d.direct?5.5:4.5)/Math.sqrt(k));
-  gPts.selectAll('.hit').attr('r', 12/Math.sqrt(k));
-  gLab.selectAll('text').style('font-size', (11/k)+'px');
+  const f = k < 1 ? 1/k : 1/Math.sqrt(k);
+  gPts.selectAll('.dot').attr('r', d => (d.isNico?8:d.direct?5.5:4.5)*f);
+  gPts.selectAll('.hit').attr('r', 12*f);
+  gLab.selectAll('text').style('font-size', (11/k)+'px').style('opacity', k < 0.8 ? 0 : 1);
+  gMunLab.selectAll('text').style('font-size', (12/k)+'px').style('opacity', k < 0.9 ? 1 : 0);
 }
 const tip = document.getElementById('maptip');
 function showTip(ev,d){ const r = document.querySelector('.mapwrap').getBoundingClientRect(); tip.style.display='block'; tip.style.left=(ev.clientX-r.left)+'px'; tip.style.top=(ev.clientY-r.top)+'px'; tip.textContent = d.isNico ? 'Nicolas Ruzette' : `${d.name} · proximité ${d.score}`; }
@@ -498,8 +508,8 @@ function openProfile(id){
     ${o.isNico?'':`<div class="dsec" style="border:0;margin:0;padding:0"><div style="display:flex;justify-content:space-between;font-size:.85rem"><span>Proximité avec Nicolas</span><b class="num">${o.score}/100</b></div><div class="simbar"><i style="width:${o.score}%"></i></div>
       ${o.sharedSpec.length||o.sharedAppr.length?`<div class="tg" style="display:flex;flex-wrap:wrap;gap:4px">${[...o.sharedSpec,...o.sharedAppr].map(t=>`<span class="tag shared">${esc(t)}</span>`).join('')}</div>`:''}</div>`}
     <dl class="kv">
-      <dt>Adresse</dt><dd>${esc(o.address||'Non trouvée')}${o.geo==='postcode'?' <span class="note">(placé au code postal)</span>':o.geo==='district'?' <span class="note">(position approximative)</span>':''}</dd>
-      <dt>Quartier</dt><dd>${esc(o.district||'—')}</dd>
+      <dt>Adresse</dt><dd>${esc(o.address||'Non trouvée')}${o.geo==='postcode'?' <span class="note">(placé au code postal)</span>':o.geo==='district'?' <span class="note">(position approximative)</span>':o.geo==='town'?' <span class="note">(placé au centre de la commune)</span>':''}</dd>
+      <dt>Commune</dt><dd>${esc(o.municipality||'—')}${o.district?' · '+esc(o.district):''}</dd>
       <dt>Langues</dt><dd>${o.langs.map(l=>esc(LANGN[l]||l)).join(', ')||'—'}</dd>
       <dt>Prix</dt><dd>${o.price?`<span class="num">${o.price} €</span> / séance`:'Non publié'}${o.isNico?' · couple 80 € (60 min), 120 € (90 min)':''}</dd>
       <dt>Avis</dt><dd>${o.reviews?`<span class="num">${o.reviews}</span> avis${o.rating?` · note ${o.rating}`:''}${o.review_platform?` (${esc(o.review_platform)})`:''}`:o.isNico?'0 avis public (4 témoignages sur son site)':'Aucun trouvé'}</dd>
@@ -586,7 +596,7 @@ function renderNico(){
         <h2>Un profil rare, que presque personne ne peut trouver.</h2>
         <div class="verdict">
           <p>Nicolas combine des choses que le marché propose rarement ensemble : il travaille en français, anglais et espagnol, fait de la thérapie de couple et de la neurodiversité adulte, et ajoute une approche corporelle et vocale. Sur ${S.n} profils relevés, aucun psychologue francophone ne réunit couple et neurodiversité.</p>
-          <p>Son problème ne tient pas à l'offre mais à la visibilité. Il n'a aucun avis public, il est absent des plateformes où les patients cherchent, ses adresses en ligne se contredisent et ses numéros d'inscription n'apparaissent nulle part. Les psychologues les plus visibles de la ville ont entre 150 et 260 avis.</p>
+          <p>Son problème ne tient pas à l'offre mais à la visibilité. Il n'a aucun avis public, il est absent des plateformes où les patients cherchent, ses adresses en ligne se contredisent et ses numéros d'inscription n'apparaissent nulle part. À Barcelone, les psychologues les plus visibles dépassent 200 avis, et ceux de la périphérie montent jusqu'à 600.</p>
         </div>
       </div>
       <div class="idcard">
@@ -624,7 +634,7 @@ function renderNico(){
         <li><b>Deux livres</b><span>Un vrai différenciateur d'autorité, s'ils sont publiés et trouvables.</span></li>
       </ul></div>
       <div class="box w"><h3>Faiblesses</h3><ul>
-        <li><b>Aucune preuve sociale</b><span>0 avis Google ou Doctoralia trouvé, seulement 4 témoignages sur son propre site. Les leaders ont 150 à 260 avis Doctoralia, et entre eux c'est le volume d'avis qui fait la différence (tout le monde a 5/5).</span></li>
+        <li><b>Aucune preuve sociale</b><span>0 avis Google ou Doctoralia trouvé, seulement 4 témoignages sur son propre site. Les leaders ont 200 à 260 avis Doctoralia à Barcelone et jusqu'à 620 en périphérie (Terrassa), et entre eux c'est le volume d'avis qui fait la différence (tout le monde a 5/5).</span></li>
         <li><b>Absent des plateformes de recherche</b><span>Pas de profil Doctoralia (canal n°1 en Espagne), ni Psychology Today (171 psys à Barcelone), ni TopDoctors, ni TherapyRoute, alors que c'est par là que les expats trouvent un thérapeute.</span></li>
         <li><b>Identité numérique éclatée</b><span>Cinq domaines, dont deux morts et deux qui le situent à Bruxelles. Le site anglais est figé depuis 2020 avec du texte de modèle oublié (« financial freedom »). Trois adresses différentes circulent (Urquinaona, Diagonal 343, Ronda Sant Antoni 80), ce qui nuit au référencement local.</span></li>
         <li><b>Inscription invisible</b><span>Ni n° COPC, ni titre de Psicólogo General Sanitario, ni autorisation du registre sanitaire n'apparaissent. ${pct(S.visible,S.n)} % des profils relevés les affichent. C'est aussi ce que demandent les assurances expat (Cigna, Allianz) pour rembourser.</span></li>
@@ -636,6 +646,7 @@ function renderNico(){
       <div class="box o"><h3>Opportunités</h3><ul>
         <li><b>Des expats en nombre record</b><span>460 000 résidents étrangers, 26,6 % de la ville. 38 900 Français inscrits au consulat (estimation 60-80 000 réels). L'annuaire francophone de référence ne compte que 32 thérapeutes.</span></li>
         <li><b>Neurodiversité adulte en forte hausse</b><span>Diagnostics tardifs (femmes de 40-60 ans qui masquent), listes d'attente jusqu'à 6 mois, DKV qui couvre la psychothérapie TSA/TDAH depuis 2026. Il y a très peu d'offre en français ou en anglais.</span></li>
+        <li><b>Une périphérie mal servie en langues étrangères</b><span>À Sant Cugat, ville d'écoles internationales, peu des ${DATA.filter(o=>o.municipality==='Sant Cugat del Vallès').length} psychologues relevés consultent en anglais, et aucun nouveau en français. À Sitges, on ne trouve aucun psychologue en cabinet positionné LGBTQ+. Ces publics restent à portée de séances en ligne.</span></li>
         <li><b>Place libre en EFT de couple</b><span>Aucun thérapeute certifié ICEEFT n'a été trouvé à Barcelone, et ceux qui affichent l'EFT sont souvent des counsellors non psychologues.</span></li>
         <li><b>Assurances expat</b><span>Les expats sont remboursés sur facture avec diagnostic et titre. Un tarif plus élevé reste alors acceptable pour le patient.</span></li>
       </ul></div>
@@ -725,12 +736,12 @@ function renderMarket(){
   const spec = [...S.specF].sort((a,b)=>b[1]-a[1]);
   const appr = [...S.apprF].sort((a,b)=>b[1]-a[1]);
   const langs = [...S.langF].sort((a,b)=>b[1]-a[1]).slice(0,8);
-  const dist = new Map(); DATA.forEach(o => { const d = o.district && DNAME_INV[o.district] ? o.district : (o.geo==='none' ? 'Sans adresse / en ligne' : (o.district||'Autre')); dist.set(d,(dist.get(d)||0)+1); });
+  const dist = new Map(); DATA.forEach(o => { const d = o.municipality && o.municipality!=='Barcelona' ? o.municipality : o.district && DNAME_INV[o.district] ? 'BCN · '+o.district : (o.geo==='none' ? 'Sans adresse / en ligne' : 'Barcelone (quartier inconnu)'); dist.set(d,(dist.get(d)||0)+1); });
   document.getElementById('market-body').innerHTML = `
   <div class="panel">
     <span class="eyebrow">Le marché en chiffres</span>
-    <h2>${S.n} psychologues et centres relevés</h2>
-    <p class="lead">Ce n'est pas un recensement : le COPC compte plusieurs milliers d'inscrits en Catalogne. C'est un échantillon des acteurs visibles en ligne, ciblé sur les segments où Nicolas est en concurrence.</p>
+    <h2>${S.n} psychologues et centres relevés, dont ${DATA.filter(o=>o.municipality&&o.municipality!=='Barcelona').length} hors de Barcelone</h2>
+    <p class="lead">Barcelone et sa région métropolitaine (Vallès, Baix Llobregat, Garraf, Barcelonès nord, Maresme). Ce n'est pas un recensement : le COPC compte plusieurs milliers d'inscrits en Catalogne. C'est un échantillon des acteurs visibles en ligne, ciblé sur les segments où Nicolas est en concurrence.</p>
     <div class="tiles">
       <div class="tile"><span class="v num">${S.medPrice}<small> €</small></span><span class="l">prix médian d'une séance individuelle</span><span class="s">${S.prices.length} profils publient un prix (${S.prices[0]}-${S.prices[S.prices.length-1]} €)</span></div>
       <div class="tile"><span class="v num">${pct(S.visible,S.n)}<small> %</small></span><span class="l">affichent leur inscription (COPC, PGS)</span><span class="s">${S.visible} profils</span></div>
@@ -744,7 +755,7 @@ function renderMarket(){
       <h2 style="margin-top:12px">Langues</h2>${bars(langs, new Set(NICO.langs), S.n, {max:S.n, label:k=>LANGN[k]||k})}</div>
   </div>
   <div class="grid2">
-    <div class="panel"><h2>Où ils exercent</h2><p class="lead">L'Eixample concentre la majorité des cabinets.</p>${bars([...dist].sort((a,b)=>b[1]-a[1]), new Set(['Eixample']), S.n, {raw:true})}</div>
+    <div class="panel"><h2>Où ils exercent</h2><p class="lead">L'Eixample concentre la majorité des cabinets. Hors de Barcelone, les communes sont regroupées par nom.</p>${bars([...dist].sort((a,b)=>b[1]-a[1]), new Set(['BCN · Eixample']), S.n, {raw:true})}</div>
     <div class="panel"><h2>Repères de prix</h2><div class="tbl"><table><thead><tr><th>Repère</th><th>Prix</th></tr></thead><tbody>
       ${MARKET.prices.map(p=>`<tr><td>${esc(p.item)}<br><a class="note" href="${esc(p.source.split(' ')[0])}" target="_blank" rel="noopener">source</a></td><td class="num">${esc(p.value)}</td></tr>`).join('')}
     </tbody></table></div></div>
@@ -762,14 +773,14 @@ const DNAME_INV = Object.fromEntries(Object.values(DNAME).map(v=>[v,1]));
 /* ---------- method ---------- */
 function renderMethod(){
   const segs = counts('segments');
-  const geo = {address:0,postcode:0,district:0,none:0}; DATA.forEach(o=>geo[o.geo]++);
+  const geo = {address:0,postcode:0,town:0,district:0,none:0}; DATA.forEach(o=>geo[o.geo]++);
   const srcs = [...new Set(DATA.flatMap(o=>o.sources||[]))].sort();
   document.getElementById('method-body').innerHTML = `
   <div class="panel"><h2>Comment ces données ont été collectées</h2>
-    <p class="lead">Six recherches web menées en parallèle le 13 octobre 2026 : psychologues anglophones et expats, francophones, neurodiversité adulte, couples, LGBTQ+ et somatique, marché général (Doctoralia, TopDoctors, grands centres, plateformes en ligne), et l'empreinte en ligne de Nicolas avec le cadre légal. Les profils ont ensuite été fusionnés, dédoublonnés et géocodés via OpenStreetMap.</p>
+    <p class="lead">Onze recherches web menées le 13 octobre 2026. Une première vague de six : psychologues anglophones et expats, francophones, neurodiversité adulte, couples, LGBTQ+ et somatique, marché général (Doctoralia, TopDoctors, grands centres, plateformes en ligne), et l'empreinte en ligne de Nicolas avec le cadre légal. Une seconde vague de cinq a couvert la région (Sant Cugat et le Vallès, Baix Llobregat et la côte, Barcelonès nord et Maresme), les quartiers de Barcelone peu couverts et les annuaires internationaux en profondeur. Les profils ont ensuite été fusionnés, dédoublonnés et géocodés via OpenStreetMap.</p>
     <div class="grid2">
       <div><h3 style="margin-bottom:10px">Profils par segment</h3>${bars(segs, null, S.n, {raw:true})}</div>
-      <div><h3 style="margin-bottom:10px">Précision de la position</h3>${bars([['Adresse exacte',geo.address],['Code postal',geo.postcode],['Quartier (approx.)',geo.district],['Non placé',geo.none]], null, S.n, {raw:true})}</div>
+      <div><h3 style="margin-bottom:10px">Précision de la position</h3>${bars([['Adresse exacte',geo.address],['Code postal',geo.postcode],['Centre de la commune',geo.town||0],['Quartier (approx.)',geo.district],['Non placé',geo.none]], null, S.n, {raw:true})}</div>
     </div>
   </div>
   <div class="panel"><h2>Limites</h2><ul style="margin:0;padding-left:18px;display:flex;flex-direction:column;gap:8px;max-width:80ch;color:var(--ink-2)">
@@ -788,7 +799,7 @@ if (window.MAP_MODE === 'osm' && window.L) {
   svgEl.style.display = 'none'; lEl.hidden = false;
   const cssVar = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim() || getComputedStyle(document.body).getPropertyValue(n).trim();
   const dark = () => cssVar('color-scheme') === 'dark' || document.documentElement.dataset.theme === 'dark' || (!document.documentElement.dataset.theme && matchMedia('(prefers-color-scheme: dark)').matches);
-  const lmap = L.map(lEl, { zoomControl: false, attributionControl: true, minZoom: 11, maxZoom: 19 }).setView([41.395, 2.165], 13);
+  const lmap = L.map(lEl, { zoomControl: false, attributionControl: true, minZoom: 9, maxZoom: 19 }).setView([41.395, 2.165], 13);
   const tiles = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19, attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
   }).addTo(lmap);
